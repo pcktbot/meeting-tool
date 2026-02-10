@@ -20,12 +20,20 @@ function App() {
   const [modelReady, setModelReady] = useState(false);
   const [showModelSetup, setShowModelSetup] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function init() {
-      // Initialize database schema
-      await initializeSchema();
-      setDbReady(true);
+      try {
+        // Initialize database schema
+        await initializeSchema();
+        setDbReady(true);
+      } catch (err) {
+        console.error("Database initialization failed:", err);
+        setError(`Database init failed: ${err instanceof Error ? err.message : String(err)}`);
+        setLoading(false);
+        return;
+      }
 
       // Check whisper model status
       try {
@@ -44,6 +52,14 @@ function App() {
     }
     init();
   }, []);
+
+  if (error) {
+    return (
+      <div className="app-loading">
+        <p style={{ color: "#e53e3e" }}>{error}</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
