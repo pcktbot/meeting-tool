@@ -1,0 +1,30 @@
+.summary-view {
+  margin-top: 24px;
+}
+
+.summary-heading {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.summary-content {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+
+.summary-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 16px 0 8px 0;
+}
+
+.summary-list-item {
+  margin-left: 16px;
+  margin-bottom: 4px;
+}
+
+.summary-paragraph {
+  margin: 8px 0;
+}

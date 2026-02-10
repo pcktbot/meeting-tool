@@ -1,0 +1,49 @@
+.record-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.record-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.record-btn:hover {
+  opacity: 0.9;
+}
+
+.record-btn--recording {
+  background: #e53e3e;
+}
+
+.record-btn--recording:hover {
+  background: #c53030;
+}
+
+.record-btn-icon {
+  font-size: 12px;
+}
+
+.record-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.record-duration {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}

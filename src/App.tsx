@@ -1,0 +1,88 @@
+import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AppLayout } from "./components/Layout/AppLayout";
+import { HomePage } from "./pages/HomePage";
+import { MeetingPage } from "./pages/MeetingPage";
+import { SettingsPage } from "./pages/SettingsPage";
+import { ModelDownloader } from "./components/Model/ModelDownloader";
+import { initializeSchema } from "./db/migrations";
+import { invoke } from "@tauri-apps/api/core";
+
+interface ModelInfo {
+  name: string;
+  path: string;
+  size_bytes: number;
+  is_downloaded: boolean;
+}
+
+function App() {
+  const [dbReady, setDbReady] = useState(false);
+  const [modelReady, setModelReady] = useState(false);
+  const [showModelSetup, setShowModelSetup] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function init() {
+      // Initialize database schema
+      await initializeSchema();
+      setDbReady(true);
+
+      // Check whisper model status
+      try {
+        const status = await invoke<ModelInfo>("get_model_status");
+        if (status.is_downloaded) {
+          await invoke("load_model");
+          setModelReady(true);
+        } else {
+          setShowModelSetup(true);
+        }
+      } catch {
+        setShowModelSetup(true);
+      }
+
+      setLoading(false);
+    }
+    init();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="app-loading">
+        <p>Initializing Meeting Transcriber...</p>
+      </div>
+    );
+  }
+
+  if (showModelSetup && !modelReady) {
+    return (
+      <ModelDownloader
+        onComplete={() => {
+          setModelReady(true);
+          setShowModelSetup(false);
+        }}
+      />
+    );
+  }
+
+  if (!dbReady) {
+    return (
+      <div className="app-loading">
+        <p>Setting up database...</p>
+      </div>
+    );
+  }
+
+  return (
+    <BrowserRouter>
+      <AppLayout>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/meeting/:id" element={<MeetingPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+        </Routes>
+      </AppLayout>
+    </BrowserRouter>
+  );
+}
+
+export default App;

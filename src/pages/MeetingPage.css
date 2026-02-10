@@ -1,0 +1,97 @@
+.meeting-page {
+  max-width: 720px;
+}
+
+.meeting-page-loading,
+.meeting-page-empty {
+  color: var(--text-secondary);
+  padding: 40px;
+  text-align: center;
+}
+
+.meeting-header {
+  margin-bottom: 24px;
+}
+
+.meeting-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.meeting-date {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.meeting-audio-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.audio-details {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.transcribe-btn {
+  padding: 8px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.transcribe-btn:hover {
+  opacity: 0.9;
+}
+
+.meeting-error {
+  color: #e53e3e;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+.summarize-container {
+  margin-top: 20px;
+}
+
+.summarize-btn {
+  padding: 10px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.summarize-btn:hover {
+  opacity: 0.9;
+}
+
+.summarize-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.summarize-error {
+  color: #e53e3e;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.summarize-warning {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-top: 8px;
+}
