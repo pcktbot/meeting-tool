@@ -51,6 +51,41 @@
   min-width: 0;
 }
 
+.meeting-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.meeting-mode-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.meeting-mode-btn:hover {
+  background: var(--hover);
+  color: var(--text-primary);
+}
+
+.meeting-mode-btn--active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.meeting-mode-btn--active:hover {
+  opacity: 0.9;
+  background: var(--accent);
+  color: white;
+}
+
 .meeting-delete-btn {
   background: none;
   border: 1px solid var(--border);

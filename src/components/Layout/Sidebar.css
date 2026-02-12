@@ -55,6 +55,32 @@
   opacity: 0.9;
 }
 
+.sidebar-nav-btn {
+  display: block;
+  width: calc(100% - 32px);
+  margin: 0 16px 0 16px;
+  padding: 8px 12px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: left;
+}
+
+.sidebar-nav-btn:hover {
+  background: var(--hover);
+  color: var(--text-primary);
+}
+
+.sidebar-nav-btn--active {
+  background: var(--active);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
 .sidebar-list {
   flex: 1;
   overflow-y: auto;

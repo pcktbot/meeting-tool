@@ -120,6 +120,30 @@ export async function getMeetingTranscriptions(
     .where(eq(schema.transcriptions.meetingId, meetingId));
 }
 
+export async function updateTranscriptionContent(
+  id: string,
+  content: string,
+  contentFormat: string,
+): Promise<void> {
+  const db = await getDb();
+  await db
+    .update(schema.transcriptions)
+    .set({ content, contentFormat })
+    .where(eq(schema.transcriptions.id, id));
+}
+
+export async function updateSummaryContent(
+  id: string,
+  content: string,
+  contentFormat: string,
+): Promise<void> {
+  const db = await getDb();
+  await db
+    .update(schema.summaries)
+    .set({ content, contentFormat })
+    .where(eq(schema.summaries.id, id));
+}
+
 export async function getMeetingSummaries(
   meetingId: string,
 ): Promise<Summary[]> {
