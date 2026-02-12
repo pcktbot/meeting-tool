@@ -22,10 +22,17 @@ export function useMeetings() {
     refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    const handler = () => { refresh(); };
+    window.addEventListener("meetings-updated", handler);
+    return () => window.removeEventListener("meetings-updated", handler);
+  }, [refresh]);
+
   const remove = useCallback(
     async (id: string) => {
       await deleteMeeting(id);
       await refresh();
+      window.dispatchEvent(new CustomEvent("meetings-updated"));
     },
     [refresh],
   );
@@ -34,6 +41,7 @@ export function useMeetings() {
     async (id: string, title: string) => {
       await updateMeetingTitle(id, title);
       await refresh();
+      window.dispatchEvent(new CustomEvent("meetings-updated"));
     },
     [refresh],
   );
@@ -59,6 +67,12 @@ export function useMeetingDetail(meetingId: string | undefined) {
 
   useEffect(() => {
     refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    const handler = () => { refresh(); };
+    window.addEventListener("meetings-updated", handler);
+    return () => window.removeEventListener("meetings-updated", handler);
   }, [refresh]);
 
   return { details, loading, refresh };

@@ -1,6 +1,6 @@
 import { useRecorder } from "../../hooks/useRecorder";
 import { useNavigate } from "react-router-dom";
-import { AudioVisualizer } from "./AudioVisualizer";
+import { RecordingWaveform } from "./RecordingWaveform";
 import "./RecordButton.css";
 
 function formatDuration(seconds: number): string {
@@ -10,15 +10,24 @@ function formatDuration(seconds: number): string {
 }
 
 export function RecordButton() {
-  const { isRecording, duration, audioLevel, startRecording, stopRecording } =
-    useRecorder();
+  const {
+    isRecording,
+    duration,
+    analyserNode,
+    startRecording,
+    stopRecording,
+  } = useRecorder();
   const navigate = useNavigate();
 
   const handleClick = async () => {
     if (isRecording) {
-      const result = await stopRecording();
-      if (result) {
-        navigate(`/meeting/${result.meeting.id}`);
+      try {
+        const result = await stopRecording();
+        if (result) {
+          navigate(`/meeting/${result.meeting.id}`);
+        }
+      } catch (err) {
+        console.error("Failed to save recording:", err);
       }
     } else {
       await startRecording();
@@ -38,7 +47,7 @@ export function RecordButton() {
       </button>
       {isRecording && (
         <div className="record-status">
-          <AudioVisualizer level={audioLevel} />
+          <RecordingWaveform analyserNode={analyserNode} isRecording={isRecording} />
           <span className="record-duration">{formatDuration(duration)}</span>
         </div>
       )}

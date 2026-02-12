@@ -1,0 +1,10 @@
+.waveform-display {
+  width: 100%;
+  height: 80px;
+  display: block;
+  border-radius: 4px;
+}
+
+.waveform-display--interactive {
+  cursor: pointer;
+}

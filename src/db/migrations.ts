@@ -43,9 +43,29 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT NOT NULL,
   updated_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
+
 `;
+
+const migrationFiles = import.meta.glob("./migrations/*.sql", {
+  query: "?raw",
+  eager: true,
+  import: "default",
+});
+
+function getMigrationSql(): string[] {
+  return Object.keys(migrationFiles)
+    .sort()
+    .map((key) => migrationFiles[key] as string);
+}
 
 export async function initializeSchema(): Promise<void> {
   const client = await getPgliteClient();
   await client.exec(SCHEMA_SQL);
+  for (const sql of getMigrationSql()) {
+    try {
+      await client.exec(sql);
+    } catch (err) {
+      console.error("Migration failed:", sql, err);
+    }
+  }
 }

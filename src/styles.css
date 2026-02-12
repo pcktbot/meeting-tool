@@ -7,9 +7,13 @@
   --border: #e0e0e2;
   --hover: rgba(0, 0, 0, 0.04);
   --active: rgba(0, 0, 0, 0.08);
-  --accent: #2563eb;
+  --accent: #1F5673;
+  --heading-font: "Roboto Slab";
+  --body-font: "IBM Plex Sans";
 }
 
+
+  
 @media (prefers-color-scheme: dark) {
   :root {
     --bg-primary: #1a1a1a;
@@ -20,7 +24,7 @@
     --border: #333333;
     --hover: rgba(255, 255, 255, 0.06);
     --active: rgba(255, 255, 255, 0.1);
-    --accent: #3b82f6;
+    --accent: #759FBC;
   }
 }
 
@@ -32,9 +36,13 @@ html,
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+  font-family: var(--body-font), -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
     Arial, sans-serif;
   font-size: 14px;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-variation-settings: "wdth" 100;
   color: var(--text-primary);
   background: var(--bg-primary);
   -webkit-font-smoothing: antialiased;
@@ -46,6 +54,8 @@ h2,
 h3,
 h4 {
   color: var(--text-primary);
+  font-family: var(--heading-font);
+  font-weight: 600;
 }
 
 button {

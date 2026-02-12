@@ -62,6 +62,10 @@ export class AudioRecorder {
     return average / 255;
   }
 
+  getAnalyserNode(): AnalyserNode | null {
+    return this.analyser;
+  }
+
   getDuration(): number {
     return (Date.now() - this.startTime) / 1000;
   }

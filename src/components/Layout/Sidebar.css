@@ -69,6 +69,11 @@
   text-align: center;
 }
 
+.sidebar-item-wrapper {
+  position: relative;
+  margin-bottom: 2px;
+}
+
 .sidebar-item {
   display: flex;
   flex-direction: column;
@@ -79,7 +84,6 @@
   border-radius: 6px;
   cursor: pointer;
   text-align: left;
-  margin-bottom: 2px;
 }
 
 .sidebar-item:hover {
@@ -88,6 +92,31 @@
 
 .sidebar-item--active {
   background: var(--active);
+}
+
+.sidebar-item-delete {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.sidebar-item-wrapper:hover .sidebar-item-delete {
+  opacity: 1;
+}
+
+.sidebar-item-delete:hover {
+  background: #e53e3e;
+  color: white;
 }
 
 .sidebar-item-title {

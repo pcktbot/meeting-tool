@@ -24,6 +24,7 @@ export const audioFiles = pgTable("audio_files", {
   format: text("format").notNull(),
   duration: integer("duration"),
   sizeBytes: bigint("size_bytes", { mode: "number" }),
+  waveformPeaks: text("waveform_peaks"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

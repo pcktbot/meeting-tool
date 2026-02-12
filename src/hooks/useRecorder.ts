@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { AudioRecorder } from "../services/audio/recorder";
 import { convertToWav } from "../services/audio/converter";
 import { saveAudioFile } from "../services/audio/fileManager";
+import { extractWaveformPeaks } from "../services/audio/waveform";
 import { createMeeting, saveAudioRecord } from "../services/meetings";
 import type { Meeting, AudioFile } from "../services/meetings";
 
@@ -9,6 +10,7 @@ export function useRecorder() {
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
   const [audioLevel, setAudioLevel] = useState(0);
+  const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
   const recorderRef = useRef<AudioRecorder | null>(null);
   const intervalRef = useRef<number | null>(null);
 
@@ -16,6 +18,7 @@ export function useRecorder() {
     const recorder = new AudioRecorder();
     recorderRef.current = recorder;
     await recorder.start();
+    setAnalyserNode(recorder.getAnalyserNode());
     setIsRecording(true);
     setDuration(0);
 
@@ -41,9 +44,18 @@ export function useRecorder() {
     recorderRef.current = null;
     setIsRecording(false);
     setAudioLevel(0);
+    setAnalyserNode(null);
 
     // Convert to WAV for whisper
     const wavBuffer = await convertToWav(webmBlob);
+
+    let peaks: number[] | null = null;
+    try {
+      peaks = extractWaveformPeaks(wavBuffer);
+    } catch (err) {
+      console.error("Waveform extraction failed:", err);
+    }
+
     const filename = `recording-${Date.now()}.wav`;
     const filePath = await saveAudioFile(wavBuffer, filename);
 
@@ -55,6 +67,7 @@ export function useRecorder() {
       "wav",
       Math.floor(currentDuration),
       wavBuffer.byteLength,
+      peaks ? JSON.stringify(peaks) : null,
     );
 
     return { meeting, audioFile };
@@ -64,6 +77,7 @@ export function useRecorder() {
     isRecording,
     duration,
     audioLevel,
+    analyserNode,
     startRecording,
     stopRecording,
   };

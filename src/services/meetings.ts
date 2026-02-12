@@ -54,11 +54,19 @@ export async function saveAudioRecord(
   format: string,
   duration: number | null,
   sizeBytes: number | null,
+  waveformPeaks?: string | null,
 ): Promise<AudioFile> {
   const db = await getDb();
   const [record] = await db
     .insert(schema.audioFiles)
-    .values({ meetingId, filePath, format, duration, sizeBytes })
+    .values({
+      meetingId,
+      filePath,
+      format,
+      duration,
+      sizeBytes,
+      waveformPeaks: waveformPeaks || null,
+    })
     .returning();
   return record;
 }
