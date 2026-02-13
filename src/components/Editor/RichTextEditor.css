@@ -80,7 +80,7 @@
 }
 
 .rich-text-editor .tiptap mark.brush-highlight[data-color="blue"] {
-  background-color: var(--hl-blue);
+  background-color: var(--hl-blue-solid);
 }
 
 .rich-text-editor .tiptap mark.brush-highlight[data-color="purple"] {

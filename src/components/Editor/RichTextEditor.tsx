@@ -1,4 +1,4 @@
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, mergeAttributes } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
@@ -9,6 +9,18 @@ import { loadTipTapContent } from "../../utils/contentConverter";
 import type { JSONContent, Editor as TiptapEditor } from "@tiptap/react";
 import type { EditorState } from "@tiptap/pm/state";
 import "./RichTextEditor.css";
+
+// Custom highlight extension that uses data-color attribute without inline styles
+const CustomHighlight = Highlight.extend({
+  renderHTML({ mark }) {
+    const color = mark.attrs.color;
+    // Merge with configured HTMLAttributes, add data-color, skip inline style
+    const attrs = mergeAttributes(this.options.HTMLAttributes, {
+      "data-color": color,
+    });
+    return ["mark", attrs, 0];
+  },
+});
 
 export const HIGHLIGHT_COLORS = [
   { name: "yellow", label: "Yellow" },
@@ -53,7 +65,7 @@ export function RichTextEditor({
       StarterKit.configure({
         heading: { levels: [2, 3, 4] },
       }),
-      Highlight.configure({
+      CustomHighlight.configure({
         multicolor: true,
         HTMLAttributes: {
           class: "brush-highlight",
