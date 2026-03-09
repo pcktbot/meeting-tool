@@ -1,78 +1,95 @@
-import {
-  pgTable,
-  text,
-  integer,
-  timestamp,
-  uuid,
-  bigint,
-} from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
-export const meetings = pgTable("meetings", {
-  id: uuid("id").primaryKey().defaultRandom(),
+export const meetings = sqliteTable("meetings", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   title: text("title").notNull().default("Untitled Meeting"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .$defaultFn(() => new Date())
+    .notNull(),
   duration: integer("duration"),
 });
 
-export const audioFiles = pgTable("audio_files", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  meetingId: uuid("meeting_id")
+export const audioFiles = sqliteTable("audio_files", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  meetingId: text("meeting_id")
     .notNull()
     .references(() => meetings.id, { onDelete: "cascade" }),
   filePath: text("file_path").notNull(),
   format: text("format").notNull(),
   duration: integer("duration"),
-  sizeBytes: bigint("size_bytes", { mode: "number" }),
+  sizeBytes: integer("size_bytes"),
   waveformPeaks: text("waveform_peaks"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .$defaultFn(() => new Date())
+    .notNull(),
 });
 
-export const transcriptions = pgTable("transcriptions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  meetingId: uuid("meeting_id")
+export const transcriptions = sqliteTable("transcriptions", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  meetingId: text("meeting_id")
     .notNull()
     .references(() => meetings.id, { onDelete: "cascade" }),
-  audioFileId: uuid("audio_file_id")
+  audioFileId: text("audio_file_id")
     .notNull()
     .references(() => audioFiles.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   contentFormat: text("content_format").notNull().default("plain"),
   modelUsed: text("model_used").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .$defaultFn(() => new Date())
+    .notNull(),
 });
 
-export const summaries = pgTable("summaries", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  meetingId: uuid("meeting_id")
+export const summaries = sqliteTable("summaries", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  meetingId: text("meeting_id")
     .notNull()
     .references(() => meetings.id, { onDelete: "cascade" }),
-  transcriptionId: uuid("transcription_id")
+  transcriptionId: text("transcription_id")
     .notNull()
     .references(() => transcriptions.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   contentFormat: text("content_format").notNull().default("plain"),
   modelUsed: text("model_used").notNull(),
   promptUsed: text("prompt_used").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .$defaultFn(() => new Date())
+    .notNull(),
 });
 
-export const highlights = pgTable("highlights", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  meetingId: uuid("meeting_id")
+export const highlights = sqliteTable("highlights", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  meetingId: text("meeting_id")
     .notNull()
     .references(() => meetings.id, { onDelete: "cascade" }),
   section: text("section").notNull(),
-  sourceId: uuid("source_id").notNull(),
+  sourceId: text("source_id").notNull(),
   color: text("color").notNull(),
   textContent: text("text_content").notNull(),
   fromPos: integer("from_pos").notNull(),
   toPos: integer("to_pos").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .$defaultFn(() => new Date())
+    .notNull(),
 });
 
-export const settings = pgTable("settings", {
+export const settings = sqliteTable("settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .$defaultFn(() => new Date())
+    .notNull(),
 });
