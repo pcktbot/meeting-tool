@@ -7,16 +7,25 @@ export type Transcription = typeof schema.transcriptions.$inferSelect;
 export type Summary = typeof schema.summaries.$inferSelect;
 
 export async function createMeeting(title?: string): Promise<Meeting> {
-  const db = await getDb();
+  const db = getDb();
+  console.log("[meetings] Creating meeting with title:", title || "Untitled Meeting");
+  
   const [meeting] = await db
     .insert(schema.meetings)
     .values({ title: title || "Untitled Meeting" })
     .returning();
+  
+  console.log("[meetings] Created meeting:", meeting);
+  
+  if (!meeting?.id) {
+    throw new Error("Failed to create meeting - no ID returned");
+  }
+  
   return meeting;
 }
 
 export async function getMeetings(): Promise<Meeting[]> {
-  const db = await getDb();
+  const db = getDb();
   return db
     .select()
     .from(schema.meetings)
@@ -24,7 +33,7 @@ export async function getMeetings(): Promise<Meeting[]> {
 }
 
 export async function getMeetingById(id: string): Promise<Meeting | null> {
-  const db = await getDb();
+  const db = getDb();
   const [meeting] = await db
     .select()
     .from(schema.meetings)
@@ -36,7 +45,7 @@ export async function updateMeetingTitle(
   id: string,
   title: string,
 ): Promise<void> {
-  const db = await getDb();
+  const db = getDb();
   await db
     .update(schema.meetings)
     .set({ title, updatedAt: new Date() })
@@ -44,7 +53,7 @@ export async function updateMeetingTitle(
 }
 
 export async function deleteMeeting(id: string): Promise<void> {
-  const db = await getDb();
+  const db = getDb();
   await db.delete(schema.meetings).where(eq(schema.meetings.id, id));
 }
 
@@ -56,7 +65,16 @@ export async function saveAudioRecord(
   sizeBytes: number | null,
   waveformPeaks?: string | null,
 ): Promise<AudioFile> {
-  const db = await getDb();
+  console.log("[meetings] Saving audio record for meeting:", meetingId);
+  
+  // Verify meeting exists first
+  const meeting = await getMeetingById(meetingId);
+  if (!meeting) {
+    throw new Error(`Cannot save audio: meeting ${meetingId} does not exist`);
+  }
+  console.log("[meetings] Verified meeting exists:", meeting.id);
+  
+  const db = getDb();
   const [record] = await db
     .insert(schema.audioFiles)
     .values({
@@ -68,6 +86,8 @@ export async function saveAudioRecord(
       waveformPeaks: waveformPeaks || null,
     })
     .returning();
+  
+  console.log("[meetings] Audio record saved:", record);
   return record;
 }
 
@@ -77,7 +97,7 @@ export async function saveTranscription(
   content: string,
   modelUsed: string,
 ): Promise<Transcription> {
-  const db = await getDb();
+  const db = getDb();
   const [record] = await db
     .insert(schema.transcriptions)
     .values({ meetingId, audioFileId, content, modelUsed })
@@ -92,7 +112,7 @@ export async function saveSummary(
   modelUsed: string,
   promptUsed: string,
 ): Promise<Summary> {
-  const db = await getDb();
+  const db = getDb();
   const [record] = await db
     .insert(schema.summaries)
     .values({ meetingId, transcriptionId, content, modelUsed, promptUsed })
@@ -103,7 +123,7 @@ export async function saveSummary(
 export async function getMeetingAudioFiles(
   meetingId: string,
 ): Promise<AudioFile[]> {
-  const db = await getDb();
+  const db = getDb();
   return db
     .select()
     .from(schema.audioFiles)
@@ -113,7 +133,7 @@ export async function getMeetingAudioFiles(
 export async function getMeetingTranscriptions(
   meetingId: string,
 ): Promise<Transcription[]> {
-  const db = await getDb();
+  const db = getDb();
   return db
     .select()
     .from(schema.transcriptions)
@@ -125,7 +145,7 @@ export async function updateTranscriptionContent(
   content: string,
   contentFormat: string,
 ): Promise<void> {
-  const db = await getDb();
+  const db = getDb();
   await db
     .update(schema.transcriptions)
     .set({ content, contentFormat })
@@ -137,7 +157,7 @@ export async function updateSummaryContent(
   content: string,
   contentFormat: string,
 ): Promise<void> {
-  const db = await getDb();
+  const db = getDb();
   await db
     .update(schema.summaries)
     .set({ content, contentFormat })
@@ -147,7 +167,7 @@ export async function updateSummaryContent(
 export async function getMeetingSummaries(
   meetingId: string,
 ): Promise<Summary[]> {
-  const db = await getDb();
+  const db = getDb();
   return db
     .select()
     .from(schema.summaries)

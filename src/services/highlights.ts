@@ -16,7 +16,7 @@ export async function createHighlight(data: {
   fromPos: number;
   toPos: number;
 }): Promise<Highlight> {
-  const db = await getDb();
+  const db = getDb();
   const [record] = await db
     .insert(schema.highlights)
     .values(data)
@@ -27,7 +27,7 @@ export async function createHighlight(data: {
 export async function getHighlightsBySource(
   sourceId: string,
 ): Promise<Highlight[]> {
-  const db = await getDb();
+  const db = getDb();
   return db
     .select()
     .from(schema.highlights)
@@ -36,7 +36,7 @@ export async function getHighlightsBySource(
 }
 
 export async function getAllHighlights(): Promise<HighlightWithMeeting[]> {
-  const db = await getDb();
+  const db = getDb();
   const rows = await db
     .select({
       id: schema.highlights.id,
@@ -60,7 +60,7 @@ export async function getAllHighlights(): Promise<HighlightWithMeeting[]> {
 }
 
 export async function deleteHighlight(id: string): Promise<void> {
-  const db = await getDb();
+  const db = getDb();
   await db
     .delete(schema.highlights)
     .where(eq(schema.highlights.id, id));
@@ -69,7 +69,7 @@ export async function deleteHighlight(id: string): Promise<void> {
 export async function deleteHighlightsBySource(
   sourceId: string,
 ): Promise<void> {
-  const db = await getDb();
+  const db = getDb();
   await db
     .delete(schema.highlights)
     .where(eq(schema.highlights.sourceId, sourceId));
@@ -86,7 +86,7 @@ export async function replaceHighlightsForSource(
     toPos: number;
   }[],
 ): Promise<void> {
-  const db = await getDb();
+  const db = getDb();
   await db
     .delete(schema.highlights)
     .where(eq(schema.highlights.sourceId, sourceId));
