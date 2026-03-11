@@ -58,3 +58,25 @@ CREATE TABLE IF NOT EXISTS settings (
 
 CREATE INDEX IF NOT EXISTS idx_highlights_meeting_id ON highlights(meeting_id);
 CREATE INDEX IF NOT EXISTS idx_highlights_source_id ON highlights(source_id);
+
+CREATE TABLE IF NOT EXISTS contribution_entries (
+  id TEXT PRIMARY KEY,
+  content TEXT NOT NULL,
+  content_format TEXT NOT NULL DEFAULT 'plain',
+  entry_date TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS contribution_summaries (
+  id TEXT PRIMARY KEY,
+  content TEXT NOT NULL,
+  date_from TEXT NOT NULL,
+  date_to TEXT NOT NULL,
+  entry_ids TEXT NOT NULL DEFAULT '[]',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_contribution_entries_date ON contribution_entries(entry_date);
+CREATE INDEX IF NOT EXISTS idx_contribution_summaries_range ON contribution_summaries(date_from, date_to);

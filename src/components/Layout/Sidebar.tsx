@@ -47,6 +47,13 @@ export function Sidebar() {
         Highlights
       </button>
 
+      <button
+        className={`sidebar-nav-btn ${location.pathname === "/contributions" ? "sidebar-nav-btn--active" : ""}`}
+        onClick={() => navigate("/contributions")}
+      >
+        Contributions
+      </button>
+
       <div className="sidebar-list">
         {loading && <p className="sidebar-loading">Loading...</p>}
         {!loading && meetings.length === 0 && (

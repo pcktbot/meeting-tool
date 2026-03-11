@@ -3,6 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { registerMeetingTools } from "./tools/meetings.ts";
 import { registerHighlightTools } from "./tools/highlights.ts";
 import { registerSummarizationTools } from "./tools/summarization.ts";
+import { registerContributionTools } from "./tools/contributions.ts";
 import { registerMeetingResources } from "./resources/meetings.ts";
 
 const server = new McpServer({
@@ -13,6 +14,7 @@ const server = new McpServer({
 registerMeetingTools(server);
 registerHighlightTools(server);
 registerSummarizationTools(server);
+registerContributionTools(server);
 registerMeetingResources(server);
 
 const transport = new StdioServerTransport();

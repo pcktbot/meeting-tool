@@ -1,0 +1,93 @@
+.contributions-page {
+  max-width: 720px;
+}
+
+.contributions-page-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+}
+
+.contributions-date-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.contributions-date-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.contributions-date-btn:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.contributions-date-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.contributions-date-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.contributions-today-btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.contributions-today-btn:hover {
+  background: var(--active);
+}
+
+.contributions-loading {
+  color: var(--text-secondary);
+  padding: 40px;
+  text-align: center;
+}
+
+.contributions-empty {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 20px 0;
+}
+
+.contributions-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.contributions-summaries {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contributions-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 4px 0;
+}

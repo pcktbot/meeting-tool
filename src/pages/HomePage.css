@@ -1,13 +1,11 @@
 .home-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 48px);
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 .home-hero {
   text-align: center;
-  max-width: 400px;
+  padding: 40px 0 32px;
 }
 
 .home-hero h2 {
@@ -24,8 +22,7 @@
 
 .home-actions {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: center;
   gap: 16px;
 }
 
@@ -37,6 +34,91 @@
   font-size: 14px;
   cursor: pointer;
   color: var(--text-primary);
+}
+
+/* Meeting list */
+
+.home-meetings {
+  margin-top: 16px;
+}
+
+.home-meetings-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.home-meetings-empty {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.home-meetings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home-meeting-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.home-meeting-link {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.home-meeting-link:hover {
+  background: var(--hover);
+}
+
+.home-meeting-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-meeting-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.home-meeting-delete {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.home-meeting-item:hover .home-meeting-delete {
+  opacity: 1;
+}
+
+.home-meeting-delete:hover {
+  background: #e53e3e;
+  color: white;
 }
 
 .import-btn:hover {

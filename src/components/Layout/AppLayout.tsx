@@ -1,15 +1,15 @@
 import { ReactNode } from "react";
-import { Sidebar } from "./Sidebar";
+import { AppHeader } from "./AppHeader";
 import "./AppLayout.css";
 
 interface AppLayoutProps {
-  children: ReactNode;
+  readonly children: ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="app-layout">
-      <Sidebar />
+      <AppHeader />
       <main className="app-main">{children}</main>
     </div>
   );

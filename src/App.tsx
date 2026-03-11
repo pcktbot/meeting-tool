@@ -5,6 +5,7 @@ import { HomePage } from "./pages/HomePage";
 import { MeetingPage } from "./pages/MeetingPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { HighlightsPage } from "./pages/HighlightsPage";
+import { ContributionsPage } from "./pages/ContributionsPage";
 import { ModelDownloader } from "./components/Model/ModelDownloader";
 import { initializeSchema } from "./db/migrations";
 import { invoke } from "@tauri-apps/api/core";
@@ -96,6 +97,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/meeting/:id" element={<MeetingPage />} />
           <Route path="/highlights" element={<HighlightsPage />} />
+          <Route path="/contributions" element={<ContributionsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </AppLayout>

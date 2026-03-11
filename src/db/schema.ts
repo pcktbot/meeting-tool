@@ -93,3 +93,34 @@ export const settings = sqliteTable("settings", {
     .$defaultFn(() => new Date())
     .notNull(),
 });
+
+export const contributionEntries = sqliteTable("contribution_entries", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  content: text("content").notNull(),
+  contentFormat: text("content_format").notNull().default("plain"),
+  entryDate: text("entry_date").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export const contributionSummaries = sqliteTable("contribution_summaries", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  content: text("content").notNull(),
+  dateFrom: text("date_from").notNull(),
+  dateTo: text("date_to").notNull(),
+  entryIds: text("entry_ids").notNull().default("[]"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
