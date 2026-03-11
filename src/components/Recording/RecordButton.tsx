@@ -30,7 +30,18 @@ export function RecordButton() {
         console.error("Failed to save recording:", err);
       }
     } else {
-      await startRecording();
+      try {
+        await startRecording();
+      } catch (err) {
+        if (err instanceof Error && err.name === "NotAllowedError") {
+          alert(
+            "Microphone access denied. Please grant microphone permission in System Settings > Privacy & Security > Microphone."
+          );
+        } else {
+          console.error("Failed to start recording:", err);
+          alert("Failed to start recording. Please check your microphone.");
+        }
+      }
     }
   };
 

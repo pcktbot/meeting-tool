@@ -14,3 +14,10 @@ export interface AudioFileInfo {
 }
 
 export type SupportedFormat = "wav" | "mp3" | "m4a" | "webm" | "ogg";
+
+export type AudioSource = "microphone" | "system" | "both";
+
+export interface AudioSourceConfig {
+  source: AudioSource;
+  microphoneDeviceId?: string;
+}

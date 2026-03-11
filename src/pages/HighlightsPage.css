@@ -1,0 +1,27 @@
+.highlights-page {
+  max-width: 720px;
+}
+
+.highlights-page-loading {
+  color: var(--text-secondary);
+  padding: 40px;
+  text-align: center;
+}
+
+.highlights-page-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+}
+
+.highlights-page-empty {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.highlights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

@@ -5,9 +5,10 @@ import { useTranscription } from "../hooks/useTranscription";
 import { useAudioPlayer } from "../hooks/useAudioPlayer";
 import { updateMeetingTitle, deleteMeeting } from "../services/meetings";
 import { confirm } from "@tauri-apps/plugin-dialog";
-import { TranscriptionView } from "../components/Transcription/TranscriptionView";
+import { TranscriptionEditor } from "../components/Transcription/TranscriptionEditor";
 import { TranscriptionProgress } from "../components/Transcription/TranscriptionProgress";
 import { SummaryView } from "../components/Summary/SummaryView";
+import { SummaryEditor } from "../components/Summary/SummaryEditor";
 import { SummarizeButton } from "../components/Summary/SummarizeButton";
 import { WaveformDisplay } from "../components/Audio/WaveformDisplay";
 import "./MeetingPage.css";
@@ -34,6 +35,7 @@ export function MeetingPage() {
   const [streamingSummary, setStreamingSummary] = useState("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const firstAudioFile = details?.audioFiles[0];
   const player = useAudioPlayer(
@@ -93,6 +95,8 @@ export function MeetingPage() {
     navigate("/");
   };
 
+  const hasContent = transcription || summary;
+
   return (
     <div className="meeting-page">
       <div className="meeting-header">
@@ -114,13 +118,23 @@ export function MeetingPage() {
               {meeting.title}
             </h2>
           )}
-          <button
-            className="meeting-delete-btn"
-            onClick={handleDelete}
-            disabled={transcribing}
-          >
-            Delete
-          </button>
+          <div className="meeting-header-actions">
+            {hasContent && (
+              <button
+                className={`meeting-mode-btn ${isEditMode ? "meeting-mode-btn--active" : ""}`}
+                onClick={() => setIsEditMode(!isEditMode)}
+              >
+                {isEditMode ? "Done" : "Edit"}
+              </button>
+            )}
+            <button
+              className="meeting-delete-btn"
+              onClick={handleDelete}
+              disabled={transcribing}
+            >
+              Delete
+            </button>
+          </div>
         </div>
         <span className="meeting-date">
           {new Date(meeting.createdAt).toLocaleString()}
@@ -178,7 +192,13 @@ export function MeetingPage() {
 
       {transcription && (
         <>
-          <TranscriptionView content={transcription.content} />
+          <TranscriptionEditor
+            transcriptionId={transcription.id}
+            meetingId={meeting.id}
+            content={transcription.content}
+            contentFormat={transcription.contentFormat ?? "plain"}
+            editable={isEditMode}
+          />
 
           {!summary && !streamingSummary && (
             <SummarizeButton
@@ -201,7 +221,15 @@ export function MeetingPage() {
         <SummaryView content={streamingSummary} />
       )}
 
-      {summary && <SummaryView content={summary.content} />}
+      {summary && (
+        <SummaryEditor
+          summaryId={summary.id}
+          meetingId={meeting.id}
+          content={summary.content}
+          contentFormat={summary.contentFormat ?? "plain"}
+          editable={isEditMode}
+        />
+      )}
     </div>
   );
 }

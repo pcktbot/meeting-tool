@@ -2,6 +2,23 @@
   max-width: 500px;
 }
 
+.settings-section {
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-section:last-of-type {
+  border-bottom: none;
+}
+
+.settings-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: var(--text-primary);
+}
+
 .settings-field {
   margin-bottom: 20px;
 }
@@ -28,6 +45,44 @@
 .settings-input:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.settings-select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.settings-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.settings-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.settings-radio input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 
 .settings-hint {

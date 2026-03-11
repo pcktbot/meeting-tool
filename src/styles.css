@@ -10,6 +10,18 @@
   --accent: #1F5673;
   --heading-font: "Roboto Slab";
   --body-font: "IBM Plex Sans";
+
+  --hl-yellow: rgba(255, 237, 74, 0.45);
+  --hl-green: rgba(119, 221, 119, 0.40);
+  --hl-pink: rgba(255, 154, 162, 0.40);
+  --hl-blue: rgba(130, 177, 255, 0.40);
+  --hl-purple: rgba(194, 152, 255, 0.40);
+
+  --hl-yellow-solid: #ffed4a;
+  --hl-green-solid: #77dd77;
+  --hl-pink-solid: #ff9aa2;
+  --hl-blue-solid: #82b1ff;
+  --hl-purple-solid: #c298ff;
 }
 
 
@@ -25,6 +37,18 @@
     --hover: rgba(255, 255, 255, 0.06);
     --active: rgba(255, 255, 255, 0.1);
     --accent: #759FBC;
+
+    --hl-yellow: rgba(255, 237, 74, 0.30);
+    --hl-green: rgba(119, 221, 119, 0.25);
+    --hl-pink: rgba(255, 154, 162, 0.25);
+    --hl-blue: rgba(130, 177, 255, 0.25);
+    --hl-purple: rgba(194, 152, 255, 0.25);
+
+    --hl-yellow-solid: #d4c83e;
+    --hl-green-solid: #5fb85f;
+    --hl-pink-solid: #d47a82;
+    --hl-blue-solid: #6a93d4;
+    --hl-purple-solid: #9e7ad4;
   }
 }
 

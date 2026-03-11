@@ -1,0 +1,129 @@
+.rich-text-editor {
+  position: relative;
+}
+
+.rich-text-editor .tiptap {
+  outline: none;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+
+.rich-text-editor--editable .tiptap {
+  border: 1px solid var(--border);
+  border-radius: 0 0 6px 6px;
+  padding: 12px 16px;
+  min-height: 120px;
+  background: var(--bg-primary);
+}
+
+.rich-text-editor--readonly .tiptap {
+  padding: 0;
+}
+
+.rich-text-editor .tiptap p {
+  margin: 4px 0;
+}
+
+.rich-text-editor .tiptap h2 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 20px 0 8px 0;
+  font-family: var(--heading-font);
+}
+
+.rich-text-editor .tiptap h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 16px 0 6px 0;
+  font-family: var(--heading-font);
+}
+
+.rich-text-editor .tiptap h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 12px 0 4px 0;
+  font-family: var(--heading-font);
+}
+
+.rich-text-editor .tiptap ul,
+.rich-text-editor .tiptap ol {
+  padding-left: 20px;
+  margin: 4px 0;
+}
+
+.rich-text-editor .tiptap li {
+  margin-bottom: 2px;
+}
+
+/* Brush-style highlight marks */
+.rich-text-editor .tiptap mark.brush-highlight {
+  background: none;
+  border-radius: 3px 8px 5px 7px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 1px 4px;
+  margin: 0 -1px;
+  position: relative;
+}
+
+.rich-text-editor .tiptap mark.brush-highlight[data-color="yellow"] {
+  background-color: var(--hl-yellow);
+}
+
+.rich-text-editor .tiptap mark.brush-highlight[data-color="green"] {
+  background-color: var(--hl-green);
+}
+
+.rich-text-editor .tiptap mark.brush-highlight[data-color="pink"] {
+  background-color: var(--hl-pink);
+}
+
+.rich-text-editor .tiptap mark.brush-highlight[data-color="blue"] {
+  background-color: var(--hl-blue-solid);
+}
+
+.rich-text-editor .tiptap mark.brush-highlight[data-color="purple"] {
+  background-color: var(--hl-purple);
+}
+
+/* Brush texture overlay for a more organic feel */
+.rich-text-editor .tiptap mark.brush-highlight::before {
+  content: "";
+  position: absolute;
+  inset: -1px -2px;
+  border-radius: inherit;
+  background: linear-gradient(
+    92deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 15%,
+    transparent 30%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 65%,
+    rgba(255, 255, 255, 0.07) 80%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Slight skew on the mask for a hand-drawn feel */
+.rich-text-editor .tiptap mark.brush-highlight {
+  mask-image: linear-gradient(
+    175deg,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.95) 20%,
+    rgba(0, 0, 0, 1) 40%,
+    rgba(0, 0, 0, 0.92) 60%,
+    rgba(0, 0, 0, 1) 80%,
+    rgba(0, 0, 0, 0.97) 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    175deg,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.95) 20%,
+    rgba(0, 0, 0, 1) 40%,
+    rgba(0, 0, 0, 0.92) 60%,
+    rgba(0, 0, 0, 1) 80%,
+    rgba(0, 0, 0, 0.97) 100%
+  );
+}
