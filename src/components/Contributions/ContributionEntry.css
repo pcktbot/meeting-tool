@@ -127,3 +127,5 @@
   color: #e53e3e;
   background: var(--hover);
 }
+
+.contrib-entry-error { color: var(--color-error, #c0392b); font-size: 0.8rem; margin-left: 0.5rem; }

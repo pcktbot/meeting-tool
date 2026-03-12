@@ -19,11 +19,16 @@ export function registerContributionTools(server: McpServer) {
         .string()
         .optional()
         .describe("Date in YYYY-MM-DD format. Defaults to today."),
+      contentFormat: z
+        .enum(["plain", "tiptap_json"])
+        .optional()
+        .default("plain")
+        .describe("Content format: 'plain' or 'tiptap_json'"),
     },
-    async ({ content, entryDate }) => {
+    async ({ content, entryDate, contentFormat }) => {
       const [entry] = await db
         .insert(schema.contributionEntries)
-        .values({ content, entryDate: entryDate ?? todayDate() })
+        .values({ content, contentFormat: contentFormat ?? "plain", entryDate: entryDate ?? todayDate() })
         .returning();
 
       return {
@@ -38,11 +43,17 @@ export function registerContributionTools(server: McpServer) {
     {
       id: z.string().describe("Entry ID"),
       content: z.string().describe("Updated contribution text"),
+      contentFormat: z
+        .enum(["plain", "tiptap_json"])
+        .optional()
+        .describe("Content format: 'plain' or 'tiptap_json'"),
     },
-    async ({ id, content }) => {
+    async ({ id, content, contentFormat }) => {
+      const updates: Record<string, unknown> = { content, updatedAt: new Date() };
+      if (contentFormat !== undefined) updates.contentFormat = contentFormat;
       const [entry] = await db
         .update(schema.contributionEntries)
-        .set({ content, updatedAt: new Date() })
+        .set(updates)
         .where(eq(schema.contributionEntries.id, id))
         .returning();
 

@@ -70,7 +70,7 @@ export function ContributionsPage() {
         )}
       </div>
 
-      <ContributionInput onAdd={addEntry} />
+      {entries.length === 0 && <ContributionInput onAdd={addEntry} />}
 
       {loading ? (
         <p className="contributions-loading">Loading...</p>

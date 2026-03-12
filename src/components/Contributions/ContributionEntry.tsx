@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorToolbar } from "../Editor/EditorToolbar";
@@ -8,7 +8,7 @@ import "./ContributionEntry.css";
 
 interface ContributionEntryProps {
   readonly entry: EntryType;
-  readonly onUpdate: (id: string, content: string, contentFormat?: string) => void;
+  readonly onUpdate: (id: string, content: string, contentFormat?: string) => Promise<void>;
   readonly onRemove: (id: string) => void;
 }
 
@@ -18,11 +18,12 @@ export function ContributionEntry({
   onRemove,
 }: ContributionEntryProps) {
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  const initialContent = loadTipTapContent(
-    entry.content,
-    entry.contentFormat,
-    "transcription",
+  const initialContent = useMemo(
+    () => loadTipTapContent(entry.content, entry.contentFormat, "transcription"),
+    [entry.content, entry.contentFormat],
   );
 
   const editor = useEditor({
@@ -41,12 +42,20 @@ export function ContributionEntry({
     editor?.commands.focus("end");
   }, [editor]);
 
-  const save = useCallback(() => {
+  const save = useCallback(async () => {
     if (!editor) return;
-    const json = editor.getJSON();
-    onUpdate(entry.id, JSON.stringify(json), "tiptap_json");
-    setEditing(false);
-    editor.setEditable(false);
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const json = editor.getJSON();
+      await onUpdate(entry.id, JSON.stringify(json), "tiptap_json");
+      setEditing(false);
+      editor.setEditable(false);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
   }, [editor, entry.id, onUpdate]);
 
   const cancel = useCallback(() => {
@@ -83,12 +92,13 @@ export function ContributionEntry({
         </div>
         {editing && (
           <div className="contrib-entry-actions">
-            <button className="contrib-entry-save" onClick={save}>
-              Save
+            <button className="contrib-entry-save" onClick={save} disabled={saving}>
+              {saving ? "Saving…" : "Save"}
             </button>
-            <button className="contrib-entry-cancel" onClick={cancel}>
+            <button className="contrib-entry-cancel" onClick={cancel} disabled={saving}>
               Cancel
             </button>
+            {saveError && <span className="contrib-entry-error">{saveError}</span>}
           </div>
         )}
       </div>

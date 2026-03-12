@@ -22,6 +22,25 @@ pub fn init_db(app: &AppHandle) -> Result<Arc<Mutex<Connection>>, String> {
     conn.execute_batch(include_str!("../../src/db/schema.sql"))
         .map_err(|e| e.to_string())?;
 
+    // Migrations: add columns that may be missing from existing DBs
+    let migrations: &[(&str, &str)] = &[
+        (
+            "SELECT COUNT(*) FROM pragma_table_info('contribution_entries') WHERE name='content_format'",
+            "ALTER TABLE contribution_entries ADD COLUMN content_format TEXT NOT NULL DEFAULT 'plain'",
+        ),
+    ];
+    for (check_sql, alter_sql) in migrations {
+        let needs_migration: bool = conn
+            .query_row(check_sql, [], |row| {
+                let count: i64 = row.get(0)?;
+                Ok(count == 0)
+            })
+            .unwrap_or(false);
+        if needs_migration {
+            conn.execute_batch(alter_sql).map_err(|e| e.to_string())?;
+        }
+    }
+
     Ok(Arc::new(Mutex::new(conn)))
 }
 
