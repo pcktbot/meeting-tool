@@ -7,6 +7,7 @@ export const SETTINGS = {
   DEFAULT_LANGUAGE: "default_language",
   AUDIO_SOURCE: "audio_source",
   MICROPHONE_DEVICE_ID: "microphone_device_id",
+  TEXT_BACKUP_LAST_RUN_ON: "text_backup_last_run_on",
 } as const;
 
 export async function getSetting(key: string): Promise<string | null> {

@@ -2,6 +2,8 @@ import { useContributions } from "../hooks/useContributions";
 import { ContributionEntry } from "../components/Contributions/ContributionEntry";
 import { ContributionSummaryCard } from "../components/Contributions/ContributionSummaryCard";
 import { ContributionInput } from "../components/Contributions/ContributionInput";
+import { ContributionTodoInput } from "../components/Contributions/ContributionTodoInput";
+import { ContributionTodoCard } from "../components/Contributions/ContributionTodoCard";
 import "./ContributionsPage.css";
 
 function formatDisplayDate(dateStr: string): string {
@@ -31,10 +33,14 @@ export function ContributionsPage() {
     setSelectedDate,
     entries,
     summaries,
+    todos,
     loading,
     addEntry,
     editEntry,
     removeEntry,
+    addTodo,
+    editTodo,
+    removeTodo,
   } = useContributions();
 
   const isToday = selectedDate === todayDate();
@@ -70,39 +76,58 @@ export function ContributionsPage() {
         )}
       </div>
 
-      {entries.length === 0 && <ContributionInput onAdd={addEntry} />}
-
       {loading ? (
         <p className="contributions-loading">Loading...</p>
       ) : (
         <>
-          {entries.length === 0 && summaries.length === 0 ? (
-            <p className="contributions-empty">
-              No entries for this day. Add something above.
-            </p>
-          ) : (
-            <>
-              <div className="contributions-entries">
-                {entries.map((entry) => (
-                  <ContributionEntry
-                    key={entry.id}
-                    entry={entry}
-                    onUpdate={editEntry}
-                    onRemove={removeEntry}
-                  />
-                ))}
-              </div>
+          {entries.length === 0 && <ContributionInput onAdd={addEntry} />}
 
-              {summaries.length > 0 && (
-                <div className="contributions-summaries">
-                  <h3 className="contributions-section-title">Summaries</h3>
-                  {summaries.map((s) => (
-                    <ContributionSummaryCard key={s.id} summary={s} />
-                  ))}
-                </div>
-              )}
-            </>
+          {entries.length === 0 && summaries.length === 0 && todos.length === 0 && (
+            <p className="contributions-empty">
+              No entries, summaries, or todos for this day yet.
+            </p>
           )}
+
+          {entries.length > 0 && (
+            <div className="contributions-entries">
+              {entries.map((entry) => (
+                <ContributionEntry
+                  key={entry.id}
+                  entry={entry}
+                  onUpdate={editEntry}
+                  onRemove={removeEntry}
+                />
+              ))}
+            </div>
+          )}
+
+          {summaries.length > 0 && (
+            <div className="contributions-summaries">
+              <h3 className="contributions-section-title">Summaries</h3>
+              {summaries.map((s) => (
+                <ContributionSummaryCard key={s.id} summary={s} />
+              ))}
+            </div>
+          )}
+
+          <div className="contributions-todos">
+            <h3 className="contributions-section-title">Todos</h3>
+            <ContributionTodoInput onAdd={addTodo} />
+            {todos.length === 0 ? (
+              <p className="contributions-section-empty">
+                No captured next steps or ideas for this date.
+              </p>
+            ) : (
+              todos.map((todo) => (
+                <ContributionTodoCard
+                  key={todo.id}
+                  todo={todo}
+                  onUpdate={editTodo}
+                  onRemove={removeTodo}
+                />
+              ))
+            )}
+          </div>
         </>
       )}
     </div>

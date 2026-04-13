@@ -39,6 +39,36 @@
   line-height: 1.7;
   margin: 0;
   color: var(--text-primary);
-  white-space: pre-wrap;
   word-break: break-word;
+}
+
+.contrib-summary-text.markdown-body h1,
+.contrib-summary-text.markdown-body h2,
+.contrib-summary-text.markdown-body h3,
+.contrib-summary-text.markdown-body h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 12px 0 4px;
+  color: var(--text-primary);
+}
+
+.contrib-summary-text.markdown-body p {
+  margin: 4px 0;
+}
+
+.contrib-summary-text.markdown-body ul {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+
+.contrib-summary-text.markdown-body li {
+  margin: 2px 0;
+}
+
+.contrib-summary-text.markdown-body strong {
+  font-weight: 600;
+}
+
+.contrib-summary-text.markdown-body *:first-child {
+  margin-top: 0;
 }

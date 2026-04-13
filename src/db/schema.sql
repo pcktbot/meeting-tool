@@ -78,5 +78,17 @@ CREATE TABLE IF NOT EXISTS contribution_summaries (
   updated_at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS contribution_todos (
+  id TEXT PRIMARY KEY,
+  content TEXT NOT NULL,
+  content_format TEXT NOT NULL DEFAULT 'plain',
+  date_from TEXT NOT NULL,
+  date_to TEXT NOT NULL,
+  entry_ids TEXT NOT NULL DEFAULT '[]',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_contribution_entries_date ON contribution_entries(entry_date);
 CREATE INDEX IF NOT EXISTS idx_contribution_summaries_range ON contribution_summaries(date_from, date_to);
+CREATE INDEX IF NOT EXISTS idx_contribution_todos_range ON contribution_todos(date_from, date_to);

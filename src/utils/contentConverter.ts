@@ -67,7 +67,7 @@ export function markdownLikeToTipTapDoc(text: string): JSONContent {
 export function loadTipTapContent(
   rawContent: string,
   contentFormat: string,
-  section: "transcription" | "summary",
+  section: "transcription" | "summary" | "todo",
 ): JSONContent {
   if (contentFormat === "tiptap_json") {
     try {
@@ -77,7 +77,7 @@ export function loadTipTapContent(
     }
   }
 
-  if (section === "summary") {
+  if (section === "summary" || section === "todo") {
     return markdownLikeToTipTapDoc(rawContent);
   }
 

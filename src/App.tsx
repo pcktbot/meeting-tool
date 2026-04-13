@@ -9,6 +9,10 @@ import { ContributionsPage } from "./pages/ContributionsPage";
 import { ModelDownloader } from "./components/Model/ModelDownloader";
 import { initializeSchema } from "./db/migrations";
 import { invoke } from "@tauri-apps/api/core";
+import {
+  ensureDailyTextBackup,
+  getBackupCheckIntervalMs,
+} from "./services/backups";
 
 interface ModelInfo {
   name: string;
@@ -54,6 +58,32 @@ function App() {
     }
     init();
   }, []);
+
+  useEffect(() => {
+    if (!dbReady) return;
+
+    let cancelled = false;
+    const runBackup = async () => {
+      try {
+        if (!cancelled) {
+          await ensureDailyTextBackup();
+        }
+      } catch (err) {
+        console.error("Automatic text backup failed:", err);
+      }
+    };
+
+    void runBackup();
+    const intervalId = globalThis.setInterval(
+      runBackup,
+      getBackupCheckIntervalMs(),
+    );
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [dbReady]);
 
   if (error) {
     return (

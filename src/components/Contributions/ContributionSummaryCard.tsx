@@ -1,3 +1,4 @@
+import { marked } from "marked";
 import type { ContributionSummary } from "../../services/contributions";
 import "./ContributionSummaryCard.css";
 
@@ -23,7 +24,10 @@ export function ContributionSummaryCard({
           {entryIds.length} {entryIds.length === 1 ? "entry" : "entries"}
         </span>
       </div>
-      <p className="contrib-summary-text">{summary.content}</p>
+      <div
+        className="contrib-summary-text markdown-body"
+        dangerouslySetInnerHTML={{ __html: marked(summary.content) as string }}
+      />
     </div>
   );
 }

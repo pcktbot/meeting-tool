@@ -15,7 +15,9 @@ export function useRecorder() {
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
   const [error, setError] = useState<string | null>(null);
   const recorderRef = useRef<AudioRecorder | null>(null);
-  const intervalRef = useRef<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof globalThis.setInterval> | null>(
+    null,
+  );
 
   const startRecording = useCallback(async (sourceOverride?: AudioSource) => {
     setError(null);

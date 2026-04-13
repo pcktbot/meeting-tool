@@ -22,6 +22,9 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::backup::export_text_backup,
+            commands::backup::get_text_backup_directory,
+            commands::backup::open_text_backup_directory,
             commands::transcribe::transcribe_file,
             commands::model::get_model_status,
             commands::model::download_model,

@@ -83,6 +83,13 @@
   gap: 10px;
 }
 
+.contributions-todos {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .contributions-section-title {
   font-size: 14px;
   font-weight: 600;
@@ -90,4 +97,11 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin: 0 0 4px 0;
+}
+
+.contributions-section-empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
 }
