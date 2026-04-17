@@ -129,3 +129,8 @@
 }
 
 .contrib-entry-error { color: var(--color-error, #c0392b); font-size: 0.8rem; margin-left: 0.5rem; }
+
+.contrib-entry--readonly:hover {
+  background: var(--bg-primary);
+  cursor: default;
+}

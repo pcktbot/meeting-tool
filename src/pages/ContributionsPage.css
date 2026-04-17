@@ -1,18 +1,26 @@
 .contributions-page {
-  max-width: 720px;
+  min-width: 0;
+}
+
+.contributions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .contributions-page-title {
   font-size: 22px;
   font-weight: 600;
-  margin: 0 0 20px 0;
+  margin: 0;
 }
 
 .contributions-date-nav {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 8px;
 }
 
 .contributions-date-btn {
@@ -38,10 +46,11 @@
   font-size: 15px;
   font-weight: 500;
   color: var(--text-primary);
+  min-width: 200px;
+  text-align: center;
 }
 
 .contributions-today-btn {
-  margin-left: auto;
   background: none;
   border: 1px solid var(--accent);
   border-radius: 6px;
@@ -52,8 +61,49 @@
   cursor: pointer;
 }
 
-.contributions-today-btn:hover {
+.contributions-today-btn:hover:not(:disabled) {
   background: var(--active);
+}
+
+.contributions-today-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Two-column layout */
+.contributions-columns {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+.contributions-col {
+  flex: 1;
+  min-width: 0;
+  max-width: 580px;
+}
+
+.contributions-col--prev {
+  opacity: 0.65;
+  border-right: 1px solid var(--border);
+  padding-right: 28px;
+}
+
+.contributions-col--current {
+  /* no extra style needed */
+}
+
+.contributions-col-date {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+
+.contributions-col--current .contributions-col-date {
+  color: var(--accent);
 }
 
 .contributions-loading {
@@ -66,37 +116,37 @@
   color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.6;
-  padding: 20px 0;
+  padding: 12px 0;
 }
 
 .contributions-entries {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 20px;
+  margin-top: 4px;
 }
 
 .contributions-summaries {
-  margin-top: 28px;
+  margin-top: 20px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
 .contributions-todos {
-  margin-top: 28px;
+  margin-top: 20px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
 .contributions-section-title {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin: 0 0 4px 0;
+  margin: 0 0 6px 0;
 }
 
 .contributions-section-empty {
@@ -104,4 +154,13 @@
   color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.6;
+}
+
+/* read-only entry style */
+.contrib-entry--readonly {
+  cursor: default;
+}
+
+.contrib-entry--readonly:hover {
+  background: var(--bg-primary);
 }

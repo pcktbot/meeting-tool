@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { path: "/", label: "New Meeting" },
   { path: "/highlights", label: "Highlights" },
   { path: "/contributions", label: "Contributions" },
+  { path: "/summaries", label: "Summaries" },
 ] as const;
 
 export function AppHeader() {
@@ -20,7 +21,7 @@ export function AppHeader() {
 
   return (
     <header className="app-header">
-      <span className="app-header-title">Meeting Tool</span>
+      <span className="app-header-title">Daily Work Diary</span>
       <nav className="app-header-nav">
         {NAV_ITEMS.map((item) => (
           <button

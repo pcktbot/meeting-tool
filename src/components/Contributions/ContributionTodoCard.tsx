@@ -10,12 +10,14 @@ interface ContributionTodoCardProps {
   readonly todo: ContributionTodo;
   readonly onUpdate: (id: string, content: string, contentFormat?: string) => Promise<void>;
   readonly onRemove: (id: string) => void;
+  readonly readOnly?: boolean;
 }
 
 export function ContributionTodoCard({
   todo,
   onUpdate,
   onRemove,
+  readOnly = false,
 }: ContributionTodoCardProps) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -95,9 +97,9 @@ export function ContributionTodoCard({
       {editing && <EditorToolbar editor={editor} />}
 
       <div
-        className={`contrib-todo-content ${editing ? "" : "contrib-todo-content--clickable"}`}
+        className={`contrib-todo-content ${!editing && !readOnly ? "contrib-todo-content--clickable" : ""}`}
       >
-        {!editing && (
+        {!editing && !readOnly && (
           <button
             type="button"
             className="contrib-todo-edit-overlay"
@@ -108,27 +110,29 @@ export function ContributionTodoCard({
         <EditorContent editor={editor} />
       </div>
 
-      <div className="contrib-todo-footer">
-        {editing ? (
-          <div className="contrib-todo-actions">
-            <button className="contrib-todo-save" onClick={save} disabled={saving}>
-              {saving ? "Saving…" : "Save"}
+      {!readOnly && (
+        <div className="contrib-todo-footer">
+          {editing ? (
+            <div className="contrib-todo-actions">
+              <button className="contrib-todo-save" onClick={save} disabled={saving}>
+                {saving ? "Saving…" : "Save"}
+              </button>
+              <button className="contrib-todo-cancel" onClick={cancel} disabled={saving}>
+                Cancel
+              </button>
+              {saveError && <span className="contrib-todo-error">{saveError}</span>}
+            </div>
+          ) : (
+            <button
+              className="contrib-todo-remove"
+              onClick={() => onRemove(todo.id)}
+              title="Remove todo"
+            >
+              &times;
             </button>
-            <button className="contrib-todo-cancel" onClick={cancel} disabled={saving}>
-              Cancel
-            </button>
-            {saveError && <span className="contrib-todo-error">{saveError}</span>}
-          </div>
-        ) : (
-          <button
-            className="contrib-todo-remove"
-            onClick={() => onRemove(todo.id)}
-            title="Remove todo"
-          >
-            &times;
-          </button>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

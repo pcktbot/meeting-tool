@@ -131,6 +131,17 @@ export async function getSummariesForDate(
     .orderBy(desc(schema.contributionSummaries.createdAt));
 }
 
+export async function getAllSummaries(): Promise<ContributionSummary[]> {
+  const db = getDb();
+  return db
+    .select()
+    .from(schema.contributionSummaries)
+    .orderBy(
+      desc(schema.contributionSummaries.dateFrom),
+      desc(schema.contributionSummaries.createdAt),
+    );
+}
+
 export async function getSummariesInRange(
   from: string,
   to: string,

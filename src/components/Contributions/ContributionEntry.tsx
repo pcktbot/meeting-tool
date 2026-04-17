@@ -10,12 +10,14 @@ interface ContributionEntryProps {
   readonly entry: EntryType;
   readonly onUpdate: (id: string, content: string, contentFormat?: string) => Promise<void>;
   readonly onRemove: (id: string) => void;
+  readonly readOnly?: boolean;
 }
 
 export function ContributionEntry({
   entry,
   onUpdate,
   onRemove,
+  readOnly = false,
 }: ContributionEntryProps) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -73,14 +75,14 @@ export function ContributionEntry({
   if (!editor) return null;
 
   return (
-    <div className={`contrib-entry ${editing ? "contrib-entry--editing" : ""}`}>
+    <div className={`contrib-entry ${editing ? "contrib-entry--editing" : ""} ${readOnly ? "contrib-entry--readonly" : ""}`}>
       <span className="contrib-entry-time">{time}</span>
       <div className="contrib-entry-body">
         {editing && <EditorToolbar editor={editor} />}
         <div
-          className={`contrib-entry-content ${editing ? "" : "contrib-entry-content--clickable"}`}
+          className={`contrib-entry-content ${!editing && !readOnly ? "contrib-entry-content--clickable" : ""}`}
         >
-          {!editing && (
+          {!editing && !readOnly && (
             <button
               type="button"
               className="contrib-entry-edit-overlay"
@@ -102,7 +104,7 @@ export function ContributionEntry({
           </div>
         )}
       </div>
-      {!editing && (
+      {!editing && !readOnly && (
         <button
           className="contrib-entry-remove"
           onClick={() => onRemove(entry.id)}
