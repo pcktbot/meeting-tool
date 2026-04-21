@@ -10,6 +10,7 @@ import { TranscriptionProgress } from "../components/Transcription/Transcription
 import { SummaryView } from "../components/Summary/SummaryView";
 import { SummaryEditor } from "../components/Summary/SummaryEditor";
 import { SummarizeButton } from "../components/Summary/SummarizeButton";
+import { CleanTranscriptButton } from "../components/Transcription/CleanTranscriptButton";
 import { WaveformDisplay } from "../components/Audio/WaveformDisplay";
 import "./MeetingPage.css";
 
@@ -55,9 +56,10 @@ export function MeetingPage() {
   const audioFile = audioFiles[0];
   const transcription = transcriptions[0];
   const summary = summaries[0];
+  const audioExpired = Boolean(audioFile?.deletedAt);
 
   const handleTranscribe = async () => {
-    if (!audioFile) return;
+    if (!audioFile || audioExpired) return;
     await transcribe(meeting.id, audioFile.id, audioFile.filePath);
     refresh();
   };
@@ -143,7 +145,7 @@ export function MeetingPage() {
 
       {audioFile && (
         <div className="meeting-audio-info">
-          {audioFile.waveformPeaks && (
+          {audioFile.waveformPeaks && !audioExpired && (
             <WaveformDisplay
               peaks={JSON.parse(audioFile.waveformPeaks)}
               progress={
@@ -155,27 +157,33 @@ export function MeetingPage() {
             />
           )}
           <div className="audio-details-row">
-            <div className="audio-playback-controls">
-              <button
-                className="play-pause-btn"
-                onClick={player.toggle}
-                disabled={player.isLoading}
-              >
-                {player.isLoading ? "..." : player.isPlaying ? "\u23F8" : "\u25B6"}
-              </button>
-              <span className="audio-time">
-                {formatTime(player.currentTime)}
-                {" / "}
-                {formatTime(player.duration)}
-              </span>
-            </div>
+            {!audioExpired ? (
+              <div className="audio-playback-controls">
+                <button
+                  className="play-pause-btn"
+                  onClick={player.toggle}
+                  disabled={player.isLoading}
+                >
+                  {player.isLoading ? "..." : player.isPlaying ? "\u23F8" : "\u25B6"}
+                </button>
+                <span className="audio-time">
+                  {formatTime(player.currentTime)}
+                  {" / "}
+                  {formatTime(player.duration)}
+                </span>
+              </div>
+            ) : (
+              <div className="audio-playback-controls">
+                <span className="audio-time">Audio expired</span>
+              </div>
+            )}
 
             <div className="audio-details">
               <span>{audioFile.format.toUpperCase()}</span>
               <span>{formatBytes(audioFile.sizeBytes)}</span>
             </div>
 
-            {!transcription && !transcribing && (
+            {!transcription && !transcribing && !audioExpired && (
               <button className="transcribe-btn" onClick={handleTranscribe}>
                 Transcribe
               </button>
@@ -200,11 +208,19 @@ export function MeetingPage() {
             editable={isEditMode}
           />
 
+          <CleanTranscriptButton
+            transcriptionId={transcription.id}
+            content={transcription.content}
+            contentFormat={transcription.contentFormat ?? "plain"}
+            onComplete={() => refresh()}
+          />
+
           {!summary && !streamingSummary && (
             <SummarizeButton
               meetingId={meeting.id}
               transcriptionId={transcription.id}
               transcriptionContent={transcription.content}
+              transcriptionContentFormat={transcription.contentFormat ?? "plain"}
               onSummaryComplete={() => {
                 setStreamingSummary("");
                 refresh();

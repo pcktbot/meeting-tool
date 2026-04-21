@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS audio_files (
   duration INTEGER,
   size_bytes INTEGER,
   waveform_peaks TEXT,
+  expires_at INTEGER,
+  deleted_at INTEGER,
   created_at INTEGER NOT NULL
 );
 
@@ -63,9 +65,24 @@ CREATE TABLE IF NOT EXISTS contribution_entries (
   id TEXT PRIMARY KEY,
   content TEXT NOT NULL,
   content_format TEXT NOT NULL DEFAULT 'plain',
+  audio_file_path TEXT,
+  audio_duration INTEGER,
+  audio_size_bytes INTEGER,
+  audio_expires_at INTEGER,
+  audio_deleted_at INTEGER,
   entry_date TEXT NOT NULL,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS contribution_highlights (
+  id TEXT PRIMARY KEY,
+  contribution_entry_id TEXT NOT NULL REFERENCES contribution_entries(id) ON DELETE CASCADE,
+  color TEXT NOT NULL,
+  text_content TEXT NOT NULL,
+  from_pos INTEGER NOT NULL,
+  to_pos INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS contribution_summaries (
@@ -90,5 +107,6 @@ CREATE TABLE IF NOT EXISTS contribution_todos (
 );
 
 CREATE INDEX IF NOT EXISTS idx_contribution_entries_date ON contribution_entries(entry_date);
+CREATE INDEX IF NOT EXISTS idx_contribution_highlights_entry_id ON contribution_highlights(contribution_entry_id);
 CREATE INDEX IF NOT EXISTS idx_contribution_summaries_range ON contribution_summaries(date_from, date_to);
 CREATE INDEX IF NOT EXISTS idx_contribution_todos_range ON contribution_todos(date_from, date_to);

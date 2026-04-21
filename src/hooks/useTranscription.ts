@@ -6,6 +6,7 @@ import {
 import { saveTranscription } from "../services/meetings";
 import type { TranscriptionResult } from "../services/transcription";
 import type { Transcription } from "../services/meetings";
+import { formatTranscriptSegments } from "../services/transcriptFormatting";
 
 export function useTranscription() {
   const [transcribing, setTranscribing] = useState(false);
@@ -29,11 +30,12 @@ export function useTranscription() {
       try {
         const result: TranscriptionResult =
           await transcribeFile(filePath);
+        const formattedTranscript = formatTranscriptSegments(result.segments);
 
         const transcription = await saveTranscription(
           meetingId,
           audioFileId,
-          result.full_text,
+          formattedTranscript || result.full_text,
           result.model_used,
         );
 

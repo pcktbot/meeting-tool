@@ -53,6 +53,41 @@ const migrations: Array<{ checkSql: string; alterSql: string }> = [
     alterSql:
       "ALTER TABLE contribution_entries ADD COLUMN content_format TEXT NOT NULL DEFAULT 'plain'",
   },
+  {
+    checkSql:
+      "SELECT COUNT(*) FROM pragma_table_info('audio_files') WHERE name='expires_at'",
+    alterSql: "ALTER TABLE audio_files ADD COLUMN expires_at INTEGER",
+  },
+  {
+    checkSql:
+      "SELECT COUNT(*) FROM pragma_table_info('audio_files') WHERE name='deleted_at'",
+    alterSql: "ALTER TABLE audio_files ADD COLUMN deleted_at INTEGER",
+  },
+  {
+    checkSql:
+      "SELECT COUNT(*) FROM pragma_table_info('contribution_entries') WHERE name='audio_file_path'",
+    alterSql: "ALTER TABLE contribution_entries ADD COLUMN audio_file_path TEXT",
+  },
+  {
+    checkSql:
+      "SELECT COUNT(*) FROM pragma_table_info('contribution_entries') WHERE name='audio_duration'",
+    alterSql: "ALTER TABLE contribution_entries ADD COLUMN audio_duration INTEGER",
+  },
+  {
+    checkSql:
+      "SELECT COUNT(*) FROM pragma_table_info('contribution_entries') WHERE name='audio_size_bytes'",
+    alterSql: "ALTER TABLE contribution_entries ADD COLUMN audio_size_bytes INTEGER",
+  },
+  {
+    checkSql:
+      "SELECT COUNT(*) FROM pragma_table_info('contribution_entries') WHERE name='audio_expires_at'",
+    alterSql: "ALTER TABLE contribution_entries ADD COLUMN audio_expires_at INTEGER",
+  },
+  {
+    checkSql:
+      "SELECT COUNT(*) FROM pragma_table_info('contribution_entries') WHERE name='audio_deleted_at'",
+    alterSql: "ALTER TABLE contribution_entries ADD COLUMN audio_deleted_at INTEGER",
+  },
 ];
 
 for (const { checkSql, alterSql } of migrations) {

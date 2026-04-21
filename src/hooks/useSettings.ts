@@ -6,18 +6,21 @@ export function useSettings() {
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [audioSourceVal, setAudioSourceVal] = useState<AudioSource>("microphone");
   const [micDeviceId, setMicDeviceId] = useState<string | null>(null);
+  const [audioRetentionDays, setAudioRetentionDays] = useState<string>("14");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const [key, source, deviceId] = await Promise.all([
+      const [key, source, deviceId, retentionDays] = await Promise.all([
         getSetting(SETTINGS.ANTHROPIC_API_KEY),
         getSetting(SETTINGS.AUDIO_SOURCE),
         getSetting(SETTINGS.MICROPHONE_DEVICE_ID),
+        getSetting(SETTINGS.AUDIO_RETENTION_DAYS),
       ]);
       setApiKey(key);
       setAudioSourceVal((source as AudioSource) || "microphone");
       setMicDeviceId(deviceId);
+      setAudioRetentionDays(retentionDays || "14");
       setLoading(false);
     }
     load();
@@ -38,6 +41,11 @@ export function useSettings() {
     setMicDeviceId(deviceId);
   }, []);
 
+  const updateAudioRetentionDays = useCallback(async (days: string) => {
+    await setSetting(SETTINGS.AUDIO_RETENTION_DAYS, days);
+    setAudioRetentionDays(days);
+  }, []);
+
   return {
     apiKey,
     setApiKey: updateApiKey,
@@ -45,6 +53,8 @@ export function useSettings() {
     setAudioSource,
     microphoneDeviceId: micDeviceId,
     setMicrophoneDeviceId,
+    audioRetentionDays,
+    setAudioRetentionDays: updateAudioRetentionDays,
     loading,
   };
 }

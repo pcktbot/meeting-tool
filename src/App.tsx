@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/Layout/AppLayout";
-import { HomePage } from "./pages/HomePage";
 import { MeetingPage } from "./pages/MeetingPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { HighlightsPage } from "./pages/HighlightsPage";
@@ -14,6 +13,10 @@ import {
   ensureDailyTextBackup,
   getBackupCheckIntervalMs,
 } from "./services/backups";
+import {
+  getAudioRetentionCleanupIntervalMs,
+  pruneExpiredAudioFiles,
+} from "./services/audioRetention";
 
 interface ModelInfo {
   name: string;
@@ -86,6 +89,32 @@ function App() {
     };
   }, [dbReady]);
 
+  useEffect(() => {
+    if (!dbReady) return;
+
+    let cancelled = false;
+    const runAudioCleanup = async () => {
+      try {
+        if (!cancelled) {
+          await pruneExpiredAudioFiles();
+        }
+      } catch (err) {
+        console.error("Automatic audio cleanup failed:", err);
+      }
+    };
+
+    void runAudioCleanup();
+    const intervalId = globalThis.setInterval(
+      runAudioCleanup,
+      getAudioRetentionCleanupIntervalMs(),
+    );
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [dbReady]);
+
   if (error) {
     return (
       <div className="app-loading">
@@ -97,7 +126,7 @@ function App() {
   if (loading) {
     return (
       <div className="app-loading">
-        <p>Initializing Meeting Transcriber...</p>
+        <p>Initializing Daily Work Diary...</p>
       </div>
     );
   }
@@ -125,10 +154,10 @@ function App() {
     <BrowserRouter>
       <AppLayout>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<ContributionsPage />} />
+          <Route path="/contributions" element={<ContributionsPage />} />
           <Route path="/meeting/:id" element={<MeetingPage />} />
           <Route path="/highlights" element={<HighlightsPage />} />
-          <Route path="/contributions" element={<ContributionsPage />} />
           <Route path="/summaries" element={<SummariesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>

@@ -10,6 +10,7 @@ import {
   deleteEntry,
   deleteTodo,
   type ContributionEntry,
+  type ContributionEntryAudioInput,
   type ContributionSummary,
   type ContributionTodo,
 } from "../services/contributions";
@@ -54,8 +55,12 @@ export function useContributions() {
   }, [refresh]);
 
   const addEntry = useCallback(
-    async (content: string, contentFormat: string = "plain") => {
-      await createEntry(content, selectedDate, contentFormat);
+    async (
+      content: string,
+      contentFormat: string = "plain",
+      audio?: ContributionEntryAudioInput | null,
+    ) => {
+      await createEntry(content, selectedDate, contentFormat, audio);
       globalThis.dispatchEvent(new CustomEvent("contributions-updated"));
     },
     [selectedDate],

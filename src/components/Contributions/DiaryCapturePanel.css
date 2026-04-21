@@ -1,0 +1,72 @@
+.diary-capture {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-primary);
+}
+
+.diary-capture-copy {
+  flex: 1;
+  min-width: 220px;
+}
+
+.diary-capture-title {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.diary-capture-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.diary-capture-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.diary-capture-btn,
+.diary-capture-secondary {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.diary-capture-btn {
+  background: var(--accent);
+  color: white;
+}
+
+.diary-capture-btn--recording {
+  background: #c53030;
+}
+
+.diary-capture-secondary {
+  background: var(--hover);
+  color: var(--text-primary);
+}
+
+.diary-capture-btn:disabled,
+.diary-capture-secondary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.diary-capture-status {
+  width: 100%;
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}

@@ -1,9 +1,11 @@
-import { useState, useCallback, useMemo } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import { EditorToolbar } from "../Editor/EditorToolbar";
-import { loadTipTapContent } from "../../utils/contentConverter";
+import { useCallback, useState } from "react";
+import { RichTextEditor, extractHighlightsFromDoc } from "../Editor/RichTextEditor";
+import {
+  createContributionHighlight,
+  replaceContributionHighlightsForEntry,
+} from "../../services/highlights";
 import type { ContributionEntry as EntryType } from "../../services/contributions";
+import { useAudioPlayer } from "../../hooks/useAudioPlayer";
 import "./ContributionEntry.css";
 
 interface ContributionEntryProps {
@@ -22,96 +24,130 @@ export function ContributionEntry({
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-
-  const initialContent = useMemo(
-    () => loadTipTapContent(entry.content, entry.contentFormat, "transcription"),
-    [entry.content, entry.contentFormat],
+  const hasAudio = Boolean(entry.audioFilePath);
+  const audioExpired = Boolean(entry.audioDeletedAt);
+  const player = useAudioPlayer(
+    !audioExpired ? entry.audioFilePath ?? undefined : undefined,
+    entry.audioDuration ?? null,
   );
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [2, 3, 4] },
-      }),
-    ],
-    content: initialContent,
-    editable: editing,
-  });
+  const handleSave = useCallback(
+    async (jsonContent: string) => {
+      setSaving(true);
+      setSaveError(null);
+      try {
+        await onUpdate(entry.id, jsonContent, "tiptap_json");
 
-  const startEdit = useCallback(() => {
-    setEditing(true);
-    editor?.setEditable(true);
-    editor?.commands.focus("end");
-  }, [editor]);
+        const doc = JSON.parse(jsonContent);
+        const marks = extractHighlightsFromDoc(doc);
+        await replaceContributionHighlightsForEntry(entry.id, marks);
+        window.dispatchEvent(new CustomEvent("highlights-updated"));
+      } catch (err) {
+        setSaveError(err instanceof Error ? err.message : String(err));
+        throw err;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [entry.id, onUpdate],
+  );
 
-  const save = useCallback(async () => {
-    if (!editor) return;
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const json = editor.getJSON();
-      await onUpdate(entry.id, JSON.stringify(json), "tiptap_json");
-      setEditing(false);
-      editor.setEditable(false);
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSaving(false);
-    }
-  }, [editor, entry.id, onUpdate]);
-
-  const cancel = useCallback(() => {
-    if (!editor) return;
-    editor.commands.setContent(initialContent);
-    setEditing(false);
-    editor.setEditable(false);
-  }, [editor, initialContent]);
+  const handleHighlightAdd = useCallback(
+    async (data: {
+      color: string;
+      textContent: string;
+      fromPos: number;
+      toPos: number;
+    }) => {
+      await createContributionHighlight({
+        contributionEntryId: entry.id,
+        ...data,
+      });
+      window.dispatchEvent(new CustomEvent("highlights-updated"));
+    },
+    [entry.id],
+  );
 
   const time = new Date(entry.createdAt).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   });
 
-  if (!editor) return null;
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
 
   return (
-    <div className={`contrib-entry ${editing ? "contrib-entry--editing" : ""} ${readOnly ? "contrib-entry--readonly" : ""}`}>
+    <div
+      className={`contrib-entry ${editing ? "contrib-entry--editing" : ""} ${readOnly ? "contrib-entry--readonly" : ""}`}
+    >
       <span className="contrib-entry-time">{time}</span>
       <div className="contrib-entry-body">
-        {editing && <EditorToolbar editor={editor} />}
-        <div
-          className={`contrib-entry-content ${!editing && !readOnly ? "contrib-entry-content--clickable" : ""}`}
-        >
-          {!editing && !readOnly && (
-            <button
-              type="button"
-              className="contrib-entry-edit-overlay"
-              onClick={startEdit}
-              aria-label="Edit entry"
-            />
-          )}
-          <EditorContent editor={editor} />
+        {hasAudio && (
+          <div className="contrib-entry-audio">
+            {audioExpired ? (
+              <span className="contrib-entry-audio-expired">Voice note expired</span>
+            ) : (
+              <>
+                <button
+                  className="contrib-entry-audio-toggle"
+                  onClick={player.toggle}
+                  disabled={player.isLoading}
+                  type="button"
+                >
+                  {player.isLoading ? "..." : player.isPlaying ? "Pause" : "Play"}
+                </button>
+                <span className="contrib-entry-audio-time">
+                  {formatTime(player.currentTime)}
+                  {" / "}
+                  {formatTime(player.duration)}
+                </span>
+              </>
+            )}
+          </div>
+        )}
+        <div className="contrib-entry-content">
+          <RichTextEditor
+            content={entry.content}
+            contentFormat={entry.contentFormat}
+            section="entry"
+            editable={editing}
+            onSave={handleSave}
+            onHighlightAdd={handleHighlightAdd}
+          />
         </div>
         {editing && (
           <div className="contrib-entry-actions">
-            <button className="contrib-entry-save" onClick={save} disabled={saving}>
-              {saving ? "Saving…" : "Save"}
-            </button>
-            <button className="contrib-entry-cancel" onClick={cancel} disabled={saving}>
-              Cancel
+            <button
+              className="contrib-entry-save"
+              onClick={() => setEditing(false)}
+              disabled={saving}
+            >
+              Done
             </button>
             {saveError && <span className="contrib-entry-error">{saveError}</span>}
           </div>
         )}
       </div>
       {!editing && !readOnly && (
-        <button
-          className="contrib-entry-remove"
-          onClick={() => onRemove(entry.id)}
-          title="Remove entry"
-        >
-          &times;
-        </button>
+        <div className="contrib-entry-controls">
+          <button
+            className="contrib-entry-edit"
+            onClick={() => setEditing(true)}
+            title="Edit entry"
+          >
+            Edit
+          </button>
+          <button
+            className="contrib-entry-remove"
+            onClick={() => onRemove(entry.id)}
+            title="Remove entry"
+          >
+            &times;
+          </button>
+        </div>
       )}
     </div>
   );

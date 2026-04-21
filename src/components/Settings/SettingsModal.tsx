@@ -18,6 +18,8 @@ export function SettingsForm() {
     setAudioSource,
     microphoneDeviceId,
     setMicrophoneDeviceId,
+    audioRetentionDays,
+    setAudioRetentionDays,
     loading,
   } = useSettings();
   const [keyInput, setKeyInput] = useState("");
@@ -62,6 +64,10 @@ export function SettingsForm() {
 
   const handleMicrophoneChange = async (deviceId: string) => {
     await setMicrophoneDeviceId(deviceId);
+  };
+
+  const handleAudioRetentionChange = async (value: string) => {
+    await setAudioRetentionDays(value);
   };
 
   const handleBackupNow = async () => {
@@ -140,9 +146,9 @@ export function SettingsForm() {
           <p className="settings-hint">
             {audioSource === "microphone" && "Records from your microphone."}
             {audioSource === "system" &&
-              "Records system/call audio. On macOS, grant screen recording permission and choose the screen or meeting app in the share picker, not the Meeting Tool window."}
+              "Attempts to record system/call audio. On macOS, this webview-based capture path may return screen video without a system-audio track."}
             {audioSource === "both" &&
-              "Records both microphone and system audio together. In the share picker, choose the screen or meeting app that has the call audio."}
+              "Records microphone plus system audio when available. On macOS, microphone capture is reliable, but system audio may require a native capture implementation."}
           </p>
         </div>
 
@@ -166,6 +172,27 @@ export function SettingsForm() {
             </select>
           </div>
         )}
+
+        <div className="settings-field">
+          <label className="settings-label" htmlFor="audio-retention">
+            Audio Retention
+          </label>
+          <select
+            id="audio-retention"
+            className="settings-select"
+            value={audioRetentionDays}
+            onChange={(e) => handleAudioRetentionChange(e.target.value)}
+          >
+            <option value="14">14 days</option>
+            <option value="7">7 days</option>
+            <option value="30">30 days</option>
+            <option value="never">Keep until deleted</option>
+          </select>
+          <p className="settings-hint">
+            Audio recordings and imported voice notes stay playable for this
+            long, then the app removes the file but keeps the transcript text.
+          </p>
+        </div>
       </div>
 
       <div className="settings-section">
@@ -183,7 +210,8 @@ export function SettingsForm() {
             placeholder="sk-ant-..."
           />
           <p className="settings-hint">
-            Required for meeting summarization. Get your key from
+            Required for meeting summarization and optional transcript cleanup.
+            Get your key from
             console.anthropic.com
           </p>
         </div>

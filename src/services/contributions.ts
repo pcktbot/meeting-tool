@@ -1,10 +1,18 @@
 import { getDb, schema } from "../db";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
+import { deleteAudioFile } from "./audio/fileManager";
 
 export type ContributionEntry = typeof schema.contributionEntries.$inferSelect;
 export type ContributionSummary =
   typeof schema.contributionSummaries.$inferSelect;
 export type ContributionTodo = typeof schema.contributionTodos.$inferSelect;
+
+export interface ContributionEntryAudioInput {
+  audioFilePath: string;
+  audioDuration?: number | null;
+  audioSizeBytes?: number | null;
+  audioExpiresAt?: Date | null;
+}
 
 function todayDate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -16,11 +24,21 @@ export async function createEntry(
   content: string,
   entryDate?: string,
   contentFormat: string = "plain",
+  audio?: ContributionEntryAudioInput | null,
 ): Promise<ContributionEntry> {
   const db = getDb();
   const [record] = await db
     .insert(schema.contributionEntries)
-    .values({ content, contentFormat, entryDate: entryDate ?? todayDate() })
+    .values({
+      content,
+      contentFormat,
+      entryDate: entryDate ?? todayDate(),
+      audioFilePath: audio?.audioFilePath ?? null,
+      audioDuration: audio?.audioDuration ?? null,
+      audioSizeBytes: audio?.audioSizeBytes ?? null,
+      audioExpiresAt: audio?.audioExpiresAt ?? null,
+      audioDeletedAt: null,
+    })
     .returning();
   return record;
 }
@@ -43,6 +61,20 @@ export async function updateEntry(
 
 export async function deleteEntry(id: string): Promise<void> {
   const db = getDb();
+  const [entry] = await db
+    .select()
+    .from(schema.contributionEntries)
+    .where(eq(schema.contributionEntries.id, id))
+    .limit(1);
+
+  if (entry?.audioFilePath && !entry.audioDeletedAt) {
+    try {
+      await deleteAudioFile(entry.audioFilePath);
+    } catch (err) {
+      console.error("Failed to delete contribution audio file:", err);
+    }
+  }
+
   await db
     .delete(schema.contributionEntries)
     .where(eq(schema.contributionEntries.id, id));

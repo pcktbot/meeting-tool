@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { importAudioFile } from "../../services/audio/fileManager";
+import {
+  deleteAudioFile,
+  importAudioFile,
+} from "../../services/audio/fileManager";
 import { convertToWav } from "../../services/audio/converter";
 import { saveAudioFile } from "../../services/audio/fileManager";
 import { createMeeting, saveAudioRecord } from "../../services/meetings";
@@ -32,6 +35,7 @@ export function ImportButton() {
         const wavFilename = `converted-${Date.now()}.wav`;
         wavPath = await saveAudioFile(wavBuffer, wavFilename);
         fileSize = wavBuffer.byteLength;
+        await deleteAudioFile(result.path);
       } else {
         const rawData = await loadAudioFile(result.path);
         wavBuffer = rawData.buffer as ArrayBuffer;

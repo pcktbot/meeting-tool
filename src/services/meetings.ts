@@ -1,5 +1,7 @@
 import { getDb, schema } from "../db";
 import { eq, desc } from "drizzle-orm";
+import { deleteAudioFile } from "./audio/fileManager";
+import { computeAudioExpiryDate } from "./audioRetention";
 
 export type Meeting = typeof schema.meetings.$inferSelect;
 export type AudioFile = typeof schema.audioFiles.$inferSelect;
@@ -54,6 +56,16 @@ export async function updateMeetingTitle(
 
 export async function deleteMeeting(id: string): Promise<void> {
   const db = getDb();
+  const audioFiles = await getMeetingAudioFiles(id);
+  for (const audio of audioFiles) {
+    if (!audio.deletedAt) {
+      try {
+        await deleteAudioFile(audio.filePath);
+      } catch (err) {
+        console.error("Failed to delete meeting audio file:", err);
+      }
+    }
+  }
   await db.delete(schema.meetings).where(eq(schema.meetings.id, id));
 }
 
@@ -75,6 +87,8 @@ export async function saveAudioRecord(
   console.log("[meetings] Verified meeting exists:", meeting.id);
   
   const db = getDb();
+  const createdAt = new Date();
+  const expiresAt = await computeAudioExpiryDate(createdAt);
   const [record] = await db
     .insert(schema.audioFiles)
     .values({
@@ -84,6 +98,9 @@ export async function saveAudioRecord(
       duration,
       sizeBytes,
       waveformPeaks: waveformPeaks || null,
+      expiresAt,
+      deletedAt: null,
+      createdAt,
     })
     .returning();
   

@@ -67,7 +67,7 @@ export function markdownLikeToTipTapDoc(text: string): JSONContent {
 export function loadTipTapContent(
   rawContent: string,
   contentFormat: string,
-  section: "transcription" | "summary" | "todo",
+  section: "transcription" | "summary" | "todo" | "entry",
 ): JSONContent {
   if (contentFormat === "tiptap_json") {
     try {
@@ -82,4 +82,50 @@ export function loadTipTapContent(
   }
 
   return plainTextToTipTapDoc(rawContent);
+}
+
+export function tipTapDocToPlainText(content: JSONContent | null): string {
+  if (!content) return "";
+
+  if (content.type === "text") {
+    return content.text || "";
+  }
+
+  const parts = (content.content || []).map((child) => tipTapDocToPlainText(child));
+  const joined = parts.join(content.type === "paragraph" ? "" : "\n").trim();
+
+  if (content.type === "paragraph" || content.type === "heading") {
+    return joined;
+  }
+
+  if (content.type === "bulletList") {
+    return (content.content || [])
+      .map((child) => `- ${tipTapDocToPlainText(child).trim()}`)
+      .join("\n");
+  }
+
+  if (content.type === "listItem") {
+    return parts.join(" ").trim();
+  }
+
+  if (content.type === "doc") {
+    return parts.filter(Boolean).join("\n\n");
+  }
+
+  return joined;
+}
+
+export function extractPlainText(
+  rawContent: string,
+  contentFormat: string,
+): string {
+  if (contentFormat !== "tiptap_json") {
+    return rawContent;
+  }
+
+  try {
+    return tipTapDocToPlainText(JSON.parse(rawContent));
+  } catch {
+    return rawContent;
+  }
 }
