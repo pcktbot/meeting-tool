@@ -3,6 +3,11 @@ import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
 import { db, schema } from "../db.ts";
 import { eq } from "drizzle-orm";
+import {
+  cleanContentWithClaude,
+  getApiKey,
+  getCleanupStylePrompt,
+} from "./cleanup.ts";
 
 const MEETING_SUMMARY_PROMPT = `You are a meeting summarization assistant. Given the following meeting transcription, produce a structured summary with these sections:
 
@@ -21,20 +26,35 @@ List any participants mentioned by name.
 Transcription:
 `;
 
-async function getApiKey(providedKey?: string): Promise<string | null> {
-  if (providedKey) return providedKey;
-  if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
-
-  // Try reading from settings table
-  const [setting] = await db
-    .select()
-    .from(schema.settings)
-    .where(eq(schema.settings.key, "anthropic_api_key"));
-
-  return setting?.value ?? null;
-}
-
 export function registerSummarizationTools(server: McpServer) {
+  server.tool(
+    "get_cleanup_preferences",
+    "Read the saved Claude cleanup style preferences and API key availability from app settings",
+    {},
+    async () => {
+      const [stylePrompt, apiKey] = await Promise.all([
+        getCleanupStylePrompt(),
+        getApiKey(),
+      ]);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                cleanupStylePrompt: stylePrompt,
+                hasAnthropicApiKey: Boolean(apiKey),
+              },
+              null,
+              2,
+            ),
+          },
+        ],
+      };
+    },
+  );
+
   server.tool(
     "save_summary",
     "Save a pre-generated summary for a meeting",
@@ -155,6 +175,121 @@ export function registerSummarizationTools(server: McpServer) {
           },
         ],
       };
+    },
+  );
+
+  server.tool(
+    "clean_meeting_transcription",
+    "Clean a meeting transcription with Claude and save the result as tiptap_json",
+    {
+      transcriptionId: z
+        .string()
+        .optional()
+        .describe("Transcription ID to clean. Provide either transcriptionId or meetingId."),
+      meetingId: z
+        .string()
+        .optional()
+        .describe("Meeting ID whose transcription should be cleaned. Provide either transcriptionId or meetingId."),
+      apiKey: z
+        .string()
+        .optional()
+        .describe("Anthropic API key override"),
+      model: z
+        .string()
+        .optional()
+        .default("claude-sonnet-4-20250514")
+        .describe("Claude model to use"),
+      stylePrompt: z
+        .string()
+        .optional()
+        .describe("Optional style prompt override. Defaults to saved cleanup preferences."),
+    },
+    async ({ transcriptionId, meetingId, apiKey, model, stylePrompt }) => {
+      const byTranscription = Boolean(transcriptionId);
+      const byMeeting = Boolean(meetingId);
+      if (byTranscription === byMeeting) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "Provide exactly one target selector: transcriptionId or meetingId.",
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      const transcriptionRows = byTranscription
+        ? await db
+            .select()
+            .from(schema.transcriptions)
+            .where(eq(schema.transcriptions.id, transcriptionId!))
+        : await db
+            .select()
+            .from(schema.transcriptions)
+            .where(eq(schema.transcriptions.meetingId, meetingId!));
+
+      const transcription = transcriptionRows[0];
+
+      if (!transcription) {
+        return {
+          content: [{ type: "text", text: "Transcription not found" }],
+          isError: true,
+        };
+      }
+
+      try {
+        const cleaned = await cleanContentWithClaude({
+          content: transcription.content,
+          contentFormat: transcription.contentFormat ?? "plain",
+          apiKey,
+          model,
+          stylePrompt,
+        });
+
+        const [updated] = await db
+          .update(schema.transcriptions)
+          .set({
+            content: cleaned.jsonContent,
+            contentFormat: "tiptap_json",
+          })
+          .where(eq(schema.transcriptions.id, transcription.id))
+          .returning();
+
+        await db
+          .delete(schema.highlights)
+          .where(eq(schema.highlights.sourceId, transcription.id));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  transcriptionId: updated.id,
+                  meetingId: updated.meetingId,
+                  model,
+                  cleanupStylePrompt: cleaned.effectiveStylePrompt,
+                  plainText: cleaned.plainText,
+                  contentFormat: updated.contentFormat,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: error instanceof Error ? error.message : String(error),
+            },
+          ],
+          isError: true,
+        };
+      }
     },
   );
 }

@@ -1,7 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { db, schema } from "../db.ts";
-import { eq, desc, and, gte, lte } from "drizzle-orm";
+import { eq, desc, and, gte, lte, isNotNull } from "drizzle-orm";
+import { cleanContentWithClaude } from "./cleanup.ts";
 
 type TiptapNode = {
   type: string;
@@ -85,6 +86,153 @@ function appendToTiptapBulletList(content: string, textToAppend: string): string
 
 export function registerContributionTools(server: McpServer) {
   // --- Entries ---
+
+  server.tool(
+    "clean_contribution_entry",
+    "Clean a contribution entry with Claude and save the result as tiptap_json. Can target an entry by id or by date, and can prefer entries created from recordings.",
+    {
+      id: z
+        .string()
+        .optional()
+        .describe("Entry ID. Provide either id or date."),
+      date: z
+        .string()
+        .optional()
+        .describe("Entry date (YYYY-MM-DD). Provide either id or date."),
+      recordedOnly: z
+        .boolean()
+        .optional()
+        .default(true)
+        .describe("When targeting by date, only consider entries with attached audio by default."),
+      apiKey: z
+        .string()
+        .optional()
+        .describe("Anthropic API key override"),
+      model: z
+        .string()
+        .optional()
+        .default("claude-sonnet-4-20250514")
+        .describe("Claude model to use"),
+      stylePrompt: z
+        .string()
+        .optional()
+        .describe("Optional style prompt override. Defaults to saved cleanup preferences."),
+    },
+    async ({ id, date, recordedOnly, apiKey, model, stylePrompt }) => {
+      const byId = Boolean(id);
+      const byDate = Boolean(date);
+      if (byId === byDate) {
+        return {
+          content: [{ type: "text", text: "Provide exactly one target selector: id or date." }],
+          isError: true,
+        };
+      }
+
+      let entry;
+      if (id) {
+        const [result] = await db
+          .select()
+          .from(schema.contributionEntries)
+          .where(eq(schema.contributionEntries.id, id));
+        entry = result;
+      } else {
+        const whereClause = recordedOnly
+          ? and(
+              eq(schema.contributionEntries.entryDate, date!),
+              isNotNull(schema.contributionEntries.audioFilePath),
+            )
+          : eq(schema.contributionEntries.entryDate, date!);
+
+        const entries = await db
+          .select()
+          .from(schema.contributionEntries)
+          .where(whereClause)
+          .orderBy(desc(schema.contributionEntries.createdAt));
+
+        if (entries.length > 1) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    message: `Found ${entries.length} candidate entries for ${date}. Use id to target one explicitly.`,
+                    entryIds: entries.map((candidate) => candidate.id),
+                  },
+                  null,
+                  2,
+                ),
+              },
+            ],
+            isError: true,
+          };
+        }
+        [entry] = entries;
+      }
+
+      if (!entry) {
+        return {
+          content: [{ type: "text", text: id ? `Entry ${id} not found` : `No matching entry found for date ${date}` }],
+          isError: true,
+        };
+      }
+
+      try {
+        const cleaned = await cleanContentWithClaude({
+          content: entry.content,
+          contentFormat: entry.contentFormat ?? "plain",
+          apiKey,
+          model,
+          stylePrompt,
+        });
+
+        const [updatedEntry] = await db
+          .update(schema.contributionEntries)
+          .set({
+            content: cleaned.jsonContent,
+            contentFormat: "tiptap_json",
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.contributionEntries.id, entry.id))
+          .returning();
+
+        await db
+          .delete(schema.contributionHighlights)
+          .where(eq(schema.contributionHighlights.contributionEntryId, entry.id));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  entryId: updatedEntry.id,
+                  entryDate: updatedEntry.entryDate,
+                  model,
+                  cleanupStylePrompt: cleaned.effectiveStylePrompt,
+                  plainText: cleaned.plainText,
+                  contentFormat: updatedEntry.contentFormat,
+                  hadAudio: Boolean(updatedEntry.audioFilePath),
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: error instanceof Error ? error.message : String(error),
+            },
+          ],
+          isError: true,
+        };
+      }
+    },
+  );
 
   server.tool(
     "create_contribution_entry",
