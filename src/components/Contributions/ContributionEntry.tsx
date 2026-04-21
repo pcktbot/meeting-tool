@@ -6,6 +6,7 @@ import {
 } from "../../services/highlights";
 import type { ContributionEntry as EntryType } from "../../services/contributions";
 import { useAudioPlayer } from "../../hooks/useAudioPlayer";
+import { CleanContributionEntryButton } from "./CleanContributionEntryButton";
 import "./ContributionEntry.css";
 
 interface ContributionEntryProps {
@@ -79,6 +80,15 @@ export function ContributionEntry({
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
 
+  const handleClaudeClean = useCallback(
+    async (jsonContent: string) => {
+      await onUpdate(entry.id, jsonContent, "tiptap_json");
+      await replaceContributionHighlightsForEntry(entry.id, []);
+      window.dispatchEvent(new CustomEvent("highlights-updated"));
+    },
+    [entry.id, onUpdate],
+  );
+
   return (
     <div
       className={`contrib-entry ${editing ? "contrib-entry--editing" : ""} ${readOnly ? "contrib-entry--readonly" : ""}`}
@@ -118,6 +128,13 @@ export function ContributionEntry({
             onHighlightAdd={handleHighlightAdd}
           />
         </div>
+        {!editing && !readOnly && (
+          <CleanContributionEntryButton
+            content={entry.content}
+            contentFormat={entry.contentFormat}
+            onClean={handleClaudeClean}
+          />
+        )}
         {editing && (
           <div className="contrib-entry-actions">
             <button

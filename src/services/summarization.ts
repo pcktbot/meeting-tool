@@ -97,6 +97,7 @@ export async function summarizeWithStreaming(
 export async function cleanTranscript(
   transcriptText: string,
   apiKey: string,
+  stylePrompt: string = "",
   model: string = "claude-sonnet-4-20250514",
 ): Promise<{ plainText: string; jsonContent: string }> {
   const anthropic = new Anthropic({
@@ -104,9 +105,14 @@ export async function cleanTranscript(
     dangerouslyAllowBrowser: true,
   });
 
+  const systemPrompt = stylePrompt.trim()
+    ? `Apply these style preferences while cleaning the transcript:\n${stylePrompt.trim()}`
+    : undefined;
+
   const message = await anthropic.messages.create({
     model,
     max_tokens: 4096,
+    system: systemPrompt,
     messages: [
       {
         role: "user",

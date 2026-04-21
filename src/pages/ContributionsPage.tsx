@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useContributions } from "../hooks/useContributions";
 import { useDayData } from "../hooks/useDayData";
 import { ContributionEntry } from "../components/Contributions/ContributionEntry";
@@ -5,6 +7,7 @@ import { ContributionSummaryCard } from "../components/Contributions/Contributio
 import { ContributionInput } from "../components/Contributions/ContributionInput";
 import { ContributionTodoInput } from "../components/Contributions/ContributionTodoInput";
 import { ContributionTodoCard } from "../components/Contributions/ContributionTodoCard";
+import { DiaryCapturePanel } from "../components/Contributions/DiaryCapturePanel";
 import "./ContributionsPage.css";
 
 function formatDisplayDate(dateStr: string): string {
@@ -38,6 +41,7 @@ function todayDate(): string {
 }
 
 export function ContributionsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     selectedDate,
     setSelectedDate,
@@ -53,6 +57,23 @@ export function ContributionsPage() {
     removeTodo,
   } = useContributions();
 
+  useEffect(() => {
+    const date = searchParams.get("date");
+    if (date && date !== selectedDate) {
+      setSelectedDate(date);
+    }
+  }, [searchParams, selectedDate, setSelectedDate]);
+
+  useEffect(() => {
+    const entryId = searchParams.get("entry");
+    if (!entryId) return;
+
+    const element = document.getElementById(`entry-${entryId}`);
+    if (element) {
+      element.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [entries, searchParams]);
+
   const prevDate = shiftDate(selectedDate, -1);
   const {
     entries: prevEntries,
@@ -63,14 +84,21 @@ export function ContributionsPage() {
 
   const isToday = selectedDate === todayDate();
 
+  const updateDate = (date: string) => {
+    setSelectedDate(date);
+    const next = new URLSearchParams(searchParams);
+    next.set("date", date);
+    next.delete("entry");
+    setSearchParams(next, { replace: true });
+  };
+
   return (
     <div className="contributions-page">
       <div className="contributions-header">
-        <h2 className="contributions-page-title">Contributions</h2>
         <div className="contributions-date-nav">
           <button
             className="contributions-date-btn"
-            onClick={() => setSelectedDate(shiftDate(selectedDate, -1))}
+            onClick={() => updateDate(shiftDate(selectedDate, -1))}
           >
             &larr;
           </button>
@@ -79,14 +107,14 @@ export function ContributionsPage() {
           </span>
           <button
             className="contributions-date-btn"
-            onClick={() => setSelectedDate(shiftDate(selectedDate, 1))}
+            onClick={() => updateDate(shiftDate(selectedDate, 1))}
             disabled={isToday}
           >
             &rarr;
           </button>
           <button
             className="contributions-today-btn"
-            onClick={() => setSelectedDate(todayDate())}
+            onClick={() => updateDate(todayDate())}
             disabled={isToday}
           >
             Today
@@ -152,6 +180,11 @@ export function ContributionsPage() {
             {isToday ? "Today" : formatShortDate(selectedDate)}
           </div>
 
+          <DiaryCapturePanel
+            selectedDate={selectedDate}
+            onEntryCreated={addEntry}
+          />
+
           {loading ? (
             <p className="contributions-loading">Loading…</p>
           ) : (
@@ -167,12 +200,13 @@ export function ContributionsPage() {
               {entries.length > 0 && (
                 <div className="contributions-entries">
                   {entries.map((entry) => (
-                    <ContributionEntry
-                      key={entry.id}
-                      entry={entry}
-                      onUpdate={editEntry}
-                      onRemove={removeEntry}
-                    />
+                    <div key={entry.id} id={`entry-${entry.id}`}>
+                      <ContributionEntry
+                        entry={entry}
+                        onUpdate={editEntry}
+                        onRemove={removeEntry}
+                      />
+                    </div>
                   ))}
                 </div>
               )}

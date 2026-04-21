@@ -1,29 +1,26 @@
 import { useState } from "react";
 import { useSettings } from "../../hooks/useSettings";
 import { cleanTranscript } from "../../services/summarization";
-import { updateTranscriptionContent } from "../../services/meetings";
 import { extractPlainText } from "../../utils/contentConverter";
 
-interface CleanTranscriptButtonProps {
-  transcriptionId: string;
+interface CleanContributionEntryButtonProps {
   content: string;
   contentFormat: string;
-  onComplete: () => void;
+  onClean: (jsonContent: string) => Promise<void>;
 }
 
-export function CleanTranscriptButton({
-  transcriptionId,
+export function CleanContributionEntryButton({
   content,
   contentFormat,
-  onComplete,
-}: CleanTranscriptButtonProps) {
+  onClean,
+}: CleanContributionEntryButtonProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { apiKey, cleanupStylePrompt } = useSettings();
 
   const handleClean = async () => {
     if (!apiKey) {
-      setError("Please set your Anthropic API key in Settings first.");
+      setError("Add your Anthropic API key in Settings first.");
       return;
     }
 
@@ -31,18 +28,13 @@ export function CleanTranscriptButton({
     setError(null);
 
     try {
-      const transcriptText = extractPlainText(content, contentFormat);
+      const entryText = extractPlainText(content, contentFormat);
       const cleaned = await cleanTranscript(
-        transcriptText,
+        entryText,
         apiKey,
         cleanupStylePrompt,
       );
-      await updateTranscriptionContent(
-        transcriptionId,
-        cleaned.jsonContent,
-        "tiptap_json",
-      );
-      onComplete();
+      await onClean(cleaned.jsonContent);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -51,20 +43,20 @@ export function CleanTranscriptButton({
   };
 
   return (
-    <div className="summarize-container">
+    <div className="contrib-entry-cleanup">
       <button
-        className="summarize-btn"
+        className="contrib-entry-cleanup-btn"
         onClick={handleClean}
         disabled={busy || !apiKey}
         type="button"
       >
-        {busy ? "Cleaning..." : "Clean Transcript with Claude"}
+        {busy ? "Cleaning..." : "Clean With Claude"}
       </button>
-      {error && <p className="summarize-error">{error}</p>}
+      {error && <span className="contrib-entry-cleanup-error">{error}</span>}
       {!apiKey && (
-        <p className="summarize-warning">
-          API key required. Go to Settings to add it.
-        </p>
+        <span className="contrib-entry-cleanup-hint">
+          API key required.
+        </span>
       )}
     </div>
   );

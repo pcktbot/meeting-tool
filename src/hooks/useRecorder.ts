@@ -6,7 +6,7 @@ import { extractWaveformPeaks } from "../services/audio/waveform";
 import { createMeeting, saveAudioRecord } from "../services/meetings";
 import { getSetting, SETTINGS } from "../services/settings";
 import type { Meeting, AudioFile } from "../services/meetings";
-import type { AudioSource, AudioSourceConfig } from "../services/audio/types";
+import type { RecordingStartResult } from "../services/audio/types";
 
 export function useRecorder() {
   const [isRecording, setIsRecording] = useState(false);
@@ -14,21 +14,20 @@ export function useRecorder() {
   const [audioLevel, setAudioLevel] = useState(0);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [startResult, setStartResult] = useState<RecordingStartResult | null>(null);
   const recorderRef = useRef<AudioRecorder | null>(null);
   const intervalRef = useRef<ReturnType<typeof globalThis.setInterval> | null>(
     null,
   );
 
-  const startRecording = useCallback(async (sourceOverride?: AudioSource) => {
+  const startRecording = useCallback(async () => {
     setError(null);
+    setStartResult(null);
     
     try {
-      // Get audio source from settings or use override
-      const savedSource = await getSetting(SETTINGS.AUDIO_SOURCE);
       const savedDeviceId = await getSetting(SETTINGS.MICROPHONE_DEVICE_ID);
-      
-      const config: AudioSourceConfig = {
-        source: sourceOverride || (savedSource as AudioSource) || "microphone",
+      const config = {
+        source: "microphone" as const,
         microphoneDeviceId: savedDeviceId || undefined,
       };
 
@@ -36,15 +35,18 @@ export function useRecorder() {
 
       const recorder = new AudioRecorder();
       recorderRef.current = recorder;
-      await recorder.start(config);
+      const result = await recorder.start(config);
       setAnalyserNode(recorder.getAnalyserNode());
       setIsRecording(true);
       setDuration(0);
+      setStartResult(result);
 
       intervalRef.current = globalThis.setInterval(() => {
         setDuration(recorder.getDuration());
         setAudioLevel(recorder.getAudioLevel());
       }, 100);
+
+      return result;
     } catch (err) {
       console.error("[useRecorder] Failed to start:", err);
       setError(err instanceof Error ? err.message : "Failed to start recording");
@@ -69,6 +71,7 @@ export function useRecorder() {
     setIsRecording(false);
     setAudioLevel(0);
     setAnalyserNode(null);
+    setStartResult(null);
 
     // Convert to WAV for whisper
     const wavBuffer = await convertToWav(webmBlob);
@@ -103,6 +106,7 @@ export function useRecorder() {
     audioLevel,
     analyserNode,
     error,
+    startResult,
     startRecording,
     stopRecording,
   };

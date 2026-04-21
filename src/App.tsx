@@ -17,6 +17,7 @@ import {
   getAudioRetentionCleanupIntervalMs,
   pruneExpiredAudioFiles,
 } from "./services/audioRetention";
+import { applyThemeSettings, getThemeSettings } from "./services/theme";
 
 interface ModelInfo {
   name: string;
@@ -38,6 +39,8 @@ function App() {
         // Initialize database schema
         await initializeSchema();
         setDbReady(true);
+        const theme = await getThemeSettings();
+        applyThemeSettings(theme);
       } catch (err) {
         console.error("Database initialization failed:", err);
         setError(`Database init failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -61,6 +64,21 @@ function App() {
       setLoading(false);
     }
     init();
+  }, []);
+
+  useEffect(() => {
+    const handler = async () => {
+      try {
+        const theme = await getThemeSettings();
+        applyThemeSettings(theme);
+      } catch (err) {
+        console.error("Failed to refresh theme settings:", err);
+      }
+    };
+
+    void handler();
+    globalThis.addEventListener("theme-settings-updated", handler);
+    return () => globalThis.removeEventListener("theme-settings-updated", handler);
   }, []);
 
   useEffect(() => {

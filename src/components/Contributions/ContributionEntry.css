@@ -95,6 +95,39 @@
   margin-top: 8px;
 }
 
+.contrib-entry-cleanup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.contrib-entry-cleanup-btn {
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.contrib-entry-cleanup-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.contrib-entry-cleanup-error,
+.contrib-entry-cleanup-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.contrib-entry-cleanup-error {
+  color: var(--color-error, #c0392b);
+}
+
 .contrib-entry-save,
 .contrib-entry-cancel {
   padding: 4px 14px;

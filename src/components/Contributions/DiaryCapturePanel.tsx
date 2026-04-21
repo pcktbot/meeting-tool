@@ -10,7 +10,6 @@ import {
 } from "../../services/audio/fileManager";
 import { transcribeFile } from "../../services/transcription";
 import { plainTextToTipTapDoc } from "../../utils/contentConverter";
-import type { AudioSource, AudioSourceConfig } from "../../services/audio/types";
 import { formatTranscriptSegments } from "../../services/transcriptFormatting";
 import { computeAudioExpiryDate } from "../../services/audioRetention";
 import type { ContributionEntryAudioInput } from "../../services/contributions";
@@ -83,11 +82,10 @@ export function DiaryCapturePanel({
     setStatus(null);
 
     try {
-      const savedSource = await getSetting(SETTINGS.AUDIO_SOURCE);
       const savedDeviceId = await getSetting(SETTINGS.MICROPHONE_DEVICE_ID);
       const recorder = new AudioRecorder();
-      const config: AudioSourceConfig = {
-        source: (savedSource as AudioSource) || "microphone",
+      const config = {
+        source: "microphone" as const,
         microphoneDeviceId: savedDeviceId || undefined,
       };
 
