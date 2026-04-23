@@ -201,6 +201,12 @@ export function SummariesPage() {
 
   useEffect(() => { void loadAll(); }, [loadAll]);
 
+  useEffect(() => {
+    const handler = () => { void loadAll(); };
+    window.addEventListener("app-refresh", handler);
+    return () => window.removeEventListener("app-refresh", handler);
+  }, [loadAll]);
+
   const handleSaved = useCallback((updated: ContributionSummary) => {
     setSummaries((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
   }, []);

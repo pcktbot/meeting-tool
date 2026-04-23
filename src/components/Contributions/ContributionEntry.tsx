@@ -89,9 +89,33 @@ export function ContributionEntry({
     [entry.id, onUpdate],
   );
 
+  const handleEntryKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (readOnly || editing) return;
+
+      const target = event.target as HTMLElement | null;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "e") {
+        event.preventDefault();
+        setEditing(true);
+      }
+    },
+    [editing, readOnly],
+  );
+
   return (
     <div
       className={`contrib-entry ${editing ? "contrib-entry--editing" : ""} ${readOnly ? "contrib-entry--readonly" : ""}`}
+      tabIndex={readOnly ? -1 : 0}
+      onKeyDown={handleEntryKeyDown}
     >
       <span className="contrib-entry-time">{time}</span>
       <div className="contrib-entry-body">
@@ -125,6 +149,7 @@ export function ContributionEntry({
             section="entry"
             editable={editing}
             onSave={handleSave}
+            onShortcutSave={() => setEditing(false)}
             onHighlightAdd={handleHighlightAdd}
           />
         </div>

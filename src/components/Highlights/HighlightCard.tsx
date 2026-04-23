@@ -1,8 +1,8 @@
-import type { HighlightWithMeeting } from "../../services/highlights";
+import type { HighlightListItem } from "../../services/highlights";
 import "./HighlightCard.css";
 
 interface HighlightCardProps {
-  highlight: HighlightWithMeeting;
+  highlight: HighlightListItem;
   onNavigate: () => void;
   onRemove: () => void;
 }
@@ -36,7 +36,7 @@ export function HighlightCard({
       <p className={`highlight-card-text highlight-card-text--${highlight.color}`}>
         {highlight.textContent}
       </p>
-      <span className="highlight-card-meeting">{highlight.meetingTitle}</span>
+      <span className="highlight-card-meeting">{highlight.targetLabel}</span>
     </div>
   );
 }

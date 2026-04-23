@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicedoc/nicedoc.io/HEAD/schemas/tauri/v2/tauri.conf.json",
-  "productName": "Meeting Transcriber",
+  "productName": "Daily Work Diary",
   "version": "0.1.0",
   "identifier": "com.meeting-tool.app",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Meeting Transcriber",
+        "title": "Daily Work Diary",
         "width": 1200,
         "height": 800,
         "minWidth": 800,

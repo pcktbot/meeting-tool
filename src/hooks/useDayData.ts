@@ -39,7 +39,11 @@ export function useDayData(date: string) {
   useEffect(() => {
     const handler = () => refresh();
     globalThis.addEventListener("contributions-updated", handler);
-    return () => globalThis.removeEventListener("contributions-updated", handler);
+    globalThis.addEventListener("app-refresh", handler);
+    return () => {
+      globalThis.removeEventListener("contributions-updated", handler);
+      globalThis.removeEventListener("app-refresh", handler);
+    };
   }, [refresh]);
 
   return { entries, summaries, todos, loading };

@@ -13,6 +13,51 @@ type TiptapDoc = {
   content: TiptapNode[];
 };
 
+function parseInlineMarkdown(text: string): TiptapNode[] {
+  const content: TiptapNode[] = [];
+  const pattern = /(\*\*[^*]+\*\*|\*[^*]+\*)/g;
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(pattern)) {
+    const start = match.index ?? 0;
+    if (start > lastIndex) {
+      content.push({
+        type: "text",
+        text: text.slice(lastIndex, start),
+      });
+    }
+
+    const token = match[0];
+    if (token.startsWith("**") && token.endsWith("**")) {
+      content.push({
+        type: "text",
+        text: token.slice(2, -2),
+        // TipTap JSON mark structure
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        marks: [{ type: "bold" }] as any,
+      } as TiptapNode);
+    } else if (token.startsWith("*") && token.endsWith("*")) {
+      content.push({
+        type: "text",
+        text: token.slice(1, -1),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        marks: [{ type: "italic" }] as any,
+      } as TiptapNode);
+    }
+
+    lastIndex = start + token.length;
+  }
+
+  if (lastIndex < text.length) {
+    content.push({
+      type: "text",
+      text: text.slice(lastIndex),
+    });
+  }
+
+  return content.length > 0 ? content : [{ type: "text", text }];
+}
+
 const TRANSCRIPT_CLEANUP_PROMPT = `You are editing a raw meeting or work diary transcript for readability.
 
 Rules:
@@ -86,19 +131,63 @@ export function extractPlainText(content: string, contentFormat: string): string
 }
 
 export function plainTextToTipTapDoc(text: string): TiptapDoc {
-  const paragraphs = text.split(/\n\n+/).map((part) => part.trim()).filter(Boolean);
+  const lines = text.split("\n");
+  const content: TiptapNode[] = [];
+  let currentListItems: TiptapNode[] = [];
 
-  if (paragraphs.length === 0) {
+  function flushList() {
+    if (currentListItems.length > 0) {
+      content.push({ type: "bulletList", content: currentListItems });
+      currentListItems = [];
+    }
+  }
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+
+    if (!line.trim()) {
+      flushList();
+      continue;
+    }
+
+    if (line.startsWith("## ")) {
+      flushList();
+      content.push({
+        type: "heading",
+        content: parseInlineMarkdown(line.slice(3).trim()),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        attrs: { level: 2 } as any,
+      } as TiptapNode);
+      continue;
+    }
+
+    if (line.startsWith("- ")) {
+      currentListItems.push({
+        type: "listItem",
+        content: [
+          {
+            type: "paragraph",
+            content: parseInlineMarkdown(line.slice(2).trim()),
+          },
+        ],
+      });
+      continue;
+    }
+
+    flushList();
+    content.push({
+      type: "paragraph",
+      content: parseInlineMarkdown(line.trim()),
+    });
+  }
+
+  flushList();
+
+  if (content.length === 0) {
     return { type: "doc", content: [{ type: "paragraph" }] };
   }
 
-  return {
-    type: "doc",
-    content: paragraphs.map((paragraph) => ({
-      type: "paragraph",
-      content: [{ type: "text", text: paragraph }],
-    })),
-  };
+  return { type: "doc", content };
 }
 
 export async function getApiKey(providedKey?: string): Promise<string | null> {

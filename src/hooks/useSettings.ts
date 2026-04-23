@@ -4,6 +4,7 @@ import type { AudioSource } from "../services/audio/types";
 import {
   applyThemeSettings,
   getThemeSettings,
+  resetThemeSettings,
   updateThemeSetting,
   type ThemeSettings,
 } from "../services/theme";
@@ -76,6 +77,12 @@ export function useSettings() {
     [],
   );
 
+  const resetTheme = useCallback(async () => {
+    const resetThemeValues = await resetThemeSettings();
+    setThemeSettings(resetThemeValues);
+    return resetThemeValues;
+  }, []);
+
   return {
     apiKey,
     setApiKey: updateApiKey,
@@ -89,6 +96,7 @@ export function useSettings() {
     setAudioRetentionDays: updateAudioRetentionDays,
     themeSettings,
     setThemeColor,
+    resetTheme,
     loading,
   };
 }

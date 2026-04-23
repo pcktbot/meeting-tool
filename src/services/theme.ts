@@ -88,3 +88,16 @@ export async function updateThemeSetting(
   window.dispatchEvent(new CustomEvent("theme-settings-updated"));
   return normalized;
 }
+
+export async function resetThemeSettings(): Promise<ThemeSettings> {
+  for (const [key, settingKey] of Object.entries(THEME_SETTING_KEYS) as Array<
+    [keyof ThemeSettings, string]
+  >) {
+    await setSetting(settingKey, THEME_DEFAULTS[key]);
+  }
+
+  const theme = { ...THEME_DEFAULTS };
+  applyThemeSettings(theme);
+  window.dispatchEvent(new CustomEvent("theme-settings-updated"));
+  return theme;
+}

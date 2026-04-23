@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { plainTextToTipTapDoc } from "../utils/contentConverter";
+import { cleanupTextToTipTapDoc } from "../utils/contentConverter";
 
 const MEETING_SUMMARY_PROMPT = `You are a meeting summarization assistant. Given the following meeting transcription, produce a structured summary with these sections:
 
@@ -127,7 +127,7 @@ export async function cleanTranscript(
   }
 
   const plainText = textBlock.text.trim();
-  const jsonContent = JSON.stringify(plainTextToTipTapDoc(plainText));
+  const jsonContent = JSON.stringify(cleanupTextToTipTapDoc(plainText));
 
   return { plainText, jsonContent };
 }
