@@ -1,11 +1,7 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/Layout/AppLayout";
-import { MeetingPage } from "./pages/MeetingPage";
-import { SettingsPage } from "./pages/SettingsPage";
-import { HighlightsPage } from "./pages/HighlightsPage";
 import { ContributionsPage } from "./pages/ContributionsPage";
-import { SummariesPage } from "./pages/SummariesPage";
 import { ModelDownloader } from "./components/Model/ModelDownloader";
 import { initializeSchema } from "./db/migrations";
 import { invoke } from "@tauri-apps/api/core";
@@ -25,6 +21,27 @@ interface ModelInfo {
   size_bytes: number;
   is_downloaded: boolean;
 }
+
+const MeetingPage = lazy(() =>
+  import("./pages/MeetingPage").then((module) => ({
+    default: module.MeetingPage,
+  })),
+);
+const SettingsPage = lazy(() =>
+  import("./pages/SettingsPage").then((module) => ({
+    default: module.SettingsPage,
+  })),
+);
+const HighlightsPage = lazy(() =>
+  import("./pages/HighlightsPage").then((module) => ({
+    default: module.HighlightsPage,
+  })),
+);
+const SummariesPage = lazy(() =>
+  import("./pages/SummariesPage").then((module) => ({
+    default: module.SummariesPage,
+  })),
+);
 
 function App() {
   const [dbReady, setDbReady] = useState(false);
@@ -171,14 +188,16 @@ function App() {
   return (
     <BrowserRouter>
       <AppLayout>
-        <Routes>
-          <Route path="/" element={<ContributionsPage />} />
-          <Route path="/contributions" element={<ContributionsPage />} />
-          <Route path="/meeting/:id" element={<MeetingPage />} />
-          <Route path="/highlights" element={<HighlightsPage />} />
-          <Route path="/summaries" element={<SummariesPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-        </Routes>
+        <Suspense fallback={<div className="app-loading"><p>Loading page...</p></div>}>
+          <Routes>
+            <Route path="/" element={<ContributionsPage />} />
+            <Route path="/contributions" element={<ContributionsPage />} />
+            <Route path="/meeting/:id" element={<MeetingPage />} />
+            <Route path="/highlights" element={<HighlightsPage />} />
+            <Route path="/summaries" element={<SummariesPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Routes>
+        </Suspense>
       </AppLayout>
     </BrowserRouter>
   );

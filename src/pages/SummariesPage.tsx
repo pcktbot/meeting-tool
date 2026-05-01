@@ -5,12 +5,16 @@ import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import { EditorToolbar } from "../components/Editor/EditorToolbar";
 import { HighlightColorPicker } from "../components/Editor/HighlightColorPicker";
-import { loadTipTapContent } from "../utils/contentConverter";
+import { loadTipTapContent, extractPlainText } from "../utils/contentConverter";
 import {
   getAllSummaries,
+  getEntriesInRange,
+  createSummary,
   updateSummary,
   type ContributionSummary,
 } from "../services/contributions";
+import { summarizeContributions } from "../services/summarization";
+import { useSettings } from "../hooks/useSettings";
 import "./SummariesPage.css";
 
 const CustomHighlight = Highlight.extend({
@@ -177,12 +181,123 @@ function SummaryEditor({ summary, onSaved }: SummaryEditorProps) {
   );
 }
 
+// ─── Generate form ─────────────────────────────────────────────────────────
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function mondayStr() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
+interface GenerateFormProps {
+  onGenerated: (summary: ContributionSummary) => void;
+  onCancel: () => void;
+}
+
+function GenerateForm({ onGenerated, onCancel }: GenerateFormProps) {
+  const { apiKey } = useSettings();
+  const [dateFrom, setDateFrom] = useState(mondayStr());
+  const [dateTo, setDateTo] = useState(todayStr());
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleGenerate = async () => {
+    if (!apiKey) {
+      setError("API key required. Add it in Settings.");
+      return;
+    }
+    setGenerating(true);
+    setError(null);
+    try {
+      const entries = await getEntriesInRange(dateFrom, dateTo);
+      if (entries.length === 0) {
+        setError("No entries found in this date range.");
+        setGenerating(false);
+        return;
+      }
+      const entriesText = entries
+        .map((e) => {
+          const text = extractPlainText(e.content, e.contentFormat ?? "plain");
+          return `[${e.entryDate}] ${text}`;
+        })
+        .join("\n\n");
+
+      const content = await summarizeContributions(entriesText, apiKey);
+      const summary = await createSummary(
+        content,
+        dateFrom,
+        dateTo,
+        entries.map((e) => e.id),
+      );
+      onGenerated(summary);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <div className="summaries-generate-form">
+      <div className="summaries-generate-fields">
+        <label className="summaries-generate-label">
+          From
+          <input
+            type="date"
+            className="summaries-generate-date"
+            value={dateFrom}
+            max={dateTo}
+            onChange={(e) => setDateFrom(e.target.value)}
+            disabled={generating}
+          />
+        </label>
+        <label className="summaries-generate-label">
+          To
+          <input
+            type="date"
+            className="summaries-generate-date"
+            value={dateTo}
+            min={dateFrom}
+            max={todayStr()}
+            onChange={(e) => setDateTo(e.target.value)}
+            disabled={generating}
+          />
+        </label>
+      </div>
+      {error && <p className="summaries-generate-error">{error}</p>}
+      <div className="summaries-generate-actions">
+        <button
+          className="summaries-generate-btn"
+          onClick={handleGenerate}
+          disabled={generating}
+        >
+          {generating ? "Generating…" : "Generate"}
+        </button>
+        <button
+          className="summaries-generate-cancel"
+          onClick={onCancel}
+          disabled={generating}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ──────────────────────────────────────────────────────────────────
 
 export function SummariesPage() {
   const [summaries, setSummaries] = useState<ContributionSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showGenerateForm, setShowGenerateForm] = useState(false);
 
   const loadAll = useCallback(async () => {
     try {
@@ -211,6 +326,12 @@ export function SummariesPage() {
     setSummaries((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
   }, []);
 
+  const handleGenerated = useCallback((summary: ContributionSummary) => {
+    setSummaries((prev) => [summary, ...prev]);
+    setSelectedId(summary.id);
+    setShowGenerateForm(false);
+  }, []);
+
   const selected = summaries.find((s) => s.id === selectedId) ?? null;
 
   if (loading) {
@@ -221,7 +342,22 @@ export function SummariesPage() {
     return (
       <div className="summaries-empty-page">
         <h2>Summaries</h2>
-        <p>No summaries yet. Summaries are generated from your contribution entries.</p>
+        {showGenerateForm ? (
+          <GenerateForm
+            onGenerated={handleGenerated}
+            onCancel={() => setShowGenerateForm(false)}
+          />
+        ) : (
+          <>
+            <p>Summarize your contribution entries over a date range.</p>
+            <button
+              className="summaries-generate-btn"
+              onClick={() => setShowGenerateForm(true)}
+            >
+              Generate Summary
+            </button>
+          </>
+        )}
       </div>
     );
   }
@@ -230,7 +366,24 @@ export function SummariesPage() {
     <div className="summaries-page">
       {/* Left sidebar: list */}
       <aside className="summaries-sidebar">
-        <h2 className="summaries-sidebar-title">Summaries</h2>
+        <div className="summaries-sidebar-header">
+          <h2 className="summaries-sidebar-title">Summaries</h2>
+          <button
+            className="summaries-new-btn"
+            onClick={() => setShowGenerateForm((v) => !v)}
+            title="Generate new summary"
+          >
+            {showGenerateForm ? "✕" : "+"}
+          </button>
+        </div>
+
+        {showGenerateForm && (
+          <GenerateForm
+            onGenerated={handleGenerated}
+            onCancel={() => setShowGenerateForm(false)}
+          />
+        )}
+
         <ul className="summaries-list">
           {summaries.map((s) => {
             const preview = getTextPreview(s.content);

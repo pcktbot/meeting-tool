@@ -22,6 +22,10 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::anthropic::claude_complete,
+            commands::anthropic::clean_transcript,
+            commands::anthropic::summarize_meeting,
+            commands::anthropic::summarize_with_streaming,
             commands::backup::export_text_backup,
             commands::backup::get_text_backup_directory,
             commands::backup::open_text_backup_directory,
