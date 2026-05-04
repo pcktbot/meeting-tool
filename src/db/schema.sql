@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS contribution_entries (
   audio_size_bytes INTEGER,
   audio_expires_at INTEGER,
   audio_deleted_at INTEGER,
+  tts_audio_file_path TEXT,
   entry_date TEXT NOT NULL,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
@@ -91,6 +92,11 @@ CREATE TABLE IF NOT EXISTS contribution_summaries (
   date_from TEXT NOT NULL,
   date_to TEXT NOT NULL,
   entry_ids TEXT NOT NULL DEFAULT '[]',
+  tts_audio_file_path TEXT,
+  tts_audio_duration INTEGER,
+  tts_audio_size_bytes INTEGER,
+  tts_audio_expires_at INTEGER,
+  tts_audio_deleted_at INTEGER,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );

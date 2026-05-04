@@ -259,3 +259,68 @@
   margin: 0 0 12px 0;
   color: var(--text-primary);
 }
+
+/* TTS controls in editor header */
+.summaries-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.summaries-speak-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 10px;
+  transition: background 0.1s, color 0.1s;
+}
+
+.summaries-speak-btn:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--text-primary);
+}
+
+.summaries-speak-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.summaries-tts-player {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.summaries-tts-toggle {
+  background: var(--accent, #7c6af7);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.65rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summaries-tts-toggle:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.summaries-tts-time {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.summaries-tts-error {
+  font-size: 11px;
+  color: #e06c75;
+}

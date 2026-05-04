@@ -214,3 +214,40 @@
   background: var(--bg-primary);
   cursor: default;
 }
+
+.contrib-entry-speak {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+  line-height: 1;
+}
+
+.contrib-entry-speak:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--text-primary);
+}
+
+.contrib-entry-speak:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.contrib-entry-tts-toggle {
+  background: none;
+  border: 1px solid var(--accent, #7c6af7);
+  border-radius: 4px;
+  color: var(--accent, #7c6af7);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 6px;
+  line-height: 1;
+}
+
+.contrib-entry-tts-toggle:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

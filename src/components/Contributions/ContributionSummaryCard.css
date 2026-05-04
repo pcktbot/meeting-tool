@@ -72,3 +72,36 @@
 .contrib-summary-text.markdown-body *:first-child {
   margin-top: 0;
 }
+
+.contrib-summary-tts-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 6px;
+}
+
+.contrib-summary-tts-toggle {
+  background: var(--accent, #7c6af7);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.65rem;
+  width: 1.3rem;
+  height: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.contrib-summary-tts-toggle:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.contrib-summary-tts-time {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}

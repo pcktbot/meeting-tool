@@ -11,10 +11,13 @@ import {
   getEntriesInRange,
   createSummary,
   updateSummary,
+  updateSummaryTtsAudio,
   type ContributionSummary,
 } from "../services/contributions";
 import { summarizeContributions } from "../services/summarization";
+import { generateTts } from "../services/tts";
 import { useSettings } from "../hooks/useSettings";
+import { useAudioPlayer } from "../hooks/useAudioPlayer";
 import "./SummariesPage.css";
 
 const CustomHighlight = Highlight.extend({
@@ -69,6 +72,12 @@ interface SummaryEditorProps {
 function SummaryEditor({ summary, onSaved }: SummaryEditorProps) {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [ttsState, setTtsState] = useState<"idle" | "generating" | "error">("idle");
+  const [ttsError, setTtsError] = useState<string | null>(null);
+  const ttsPlayer = useAudioPlayer(
+    summary.ttsAudioFilePath ?? undefined,
+    summary.ttsAudioDuration ?? null,
+  );
 
   const contentFormat = useMemo(() => {
     try {
@@ -136,6 +145,30 @@ function SummaryEditor({ summary, onSaved }: SummaryEditorProps) {
     editor.chain().focus().unsetHighlight().run();
   }, [editor]);
 
+  const handleSpeak = useCallback(async () => {
+    setTtsState("generating");
+    setTtsError(null);
+    try {
+      const text = extractPlainText(
+        editor?.getHTML() ?? summary.content,
+        "plain",
+      );
+      const path = await generateTts(text, `tts-${summary.id}-${Date.now()}.wav`);
+      const updated = await updateSummaryTtsAudio(summary.id, path);
+      onSaved(updated);
+      setTtsState("idle");
+    } catch (err) {
+      setTtsError(err instanceof Error ? err.message : String(err));
+      setTtsState("error");
+    }
+  }, [editor, summary.id, summary.content, onSaved]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
   const isInsideHighlight = editor?.isActive("highlight") ?? false;
 
   if (!editor) return null;
@@ -151,11 +184,40 @@ function SummaryEditor({ summary, onSaved }: SummaryEditorProps) {
             {entryIds.length} {entryIds.length === 1 ? "entry" : "entries"}
           </span>
         </div>
-        {saveStatus !== "idle" && (
-          <span className="summaries-editor-status">
-            {saveStatus === "saving" ? "Saving…" : "Saved"}
-          </span>
-        )}
+        <div className="summaries-editor-actions">
+          <button
+            className="summaries-speak-btn"
+            onClick={handleSpeak}
+            disabled={ttsState === "generating"}
+            title="Read summary in your voice"
+            type="button"
+          >
+            {ttsState === "generating" ? "Generating…" : summary.ttsAudioFilePath ? "Re-speak" : "Speak"}
+          </button>
+          {summary.ttsAudioFilePath && ttsState === "idle" && (
+            <div className="summaries-tts-player">
+              <button
+                className="summaries-tts-toggle"
+                onClick={ttsPlayer.toggle}
+                disabled={ttsPlayer.isLoading}
+                type="button"
+              >
+                {ttsPlayer.isLoading ? "…" : ttsPlayer.isPlaying ? "Pause" : "▶"}
+              </button>
+              <span className="summaries-tts-time">
+                {formatTime(ttsPlayer.currentTime)} / {formatTime(ttsPlayer.duration)}
+              </span>
+            </div>
+          )}
+          {ttsState === "error" && ttsError && (
+            <span className="summaries-tts-error" title={ttsError}>Voice unavailable</span>
+          )}
+          {saveStatus !== "idle" && (
+            <span className="summaries-editor-status">
+              {saveStatus === "saving" ? "Saving…" : "Saved"}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="rich-text-editor rich-text-editor--editable summaries-editor-body">

@@ -140,6 +140,34 @@ export async function updateSummary(
   return record;
 }
 
+export async function updateSummaryTtsAudio(
+  id: string,
+  ttsAudioFilePath: string,
+  ttsAudioDuration?: number | null,
+  ttsAudioSizeBytes?: number | null,
+): Promise<ContributionSummary> {
+  const db = getDb();
+  const [record] = await db
+    .update(schema.contributionSummaries)
+    .set({ ttsAudioFilePath, ttsAudioDuration, ttsAudioSizeBytes, updatedAt: new Date() })
+    .where(eq(schema.contributionSummaries.id, id))
+    .returning();
+  return record;
+}
+
+export async function updateEntryTtsAudio(
+  id: string,
+  ttsAudioFilePath: string,
+): Promise<ContributionEntry> {
+  const db = getDb();
+  const [record] = await db
+    .update(schema.contributionEntries)
+    .set({ ttsAudioFilePath, updatedAt: new Date() })
+    .where(eq(schema.contributionEntries.id, id))
+    .returning();
+  return record;
+}
+
 export async function deleteSummary(id: string): Promise<void> {
   const db = getDb();
   await db

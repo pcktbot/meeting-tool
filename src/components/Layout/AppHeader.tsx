@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { PromptBot } from "../PromptBot/PromptBot";
 import "./AppHeader.css";
 
 const NAV_ITEMS = [
@@ -10,6 +12,7 @@ const NAV_ITEMS = [
 export function AppHeader() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [showBot, setShowBot] = useState(false);
   const handleRefresh = () => {
     globalThis.dispatchEvent(new CustomEvent("app-refresh"));
   };
@@ -39,6 +42,13 @@ export function AppHeader() {
       </nav>
       <div className="app-header-actions">
         <button
+          className={`app-header-action app-header-voice ${showBot ? "app-header-voice--active" : ""}`}
+          onClick={() => setShowBot((v) => !v)}
+          title="Voice bot"
+        >
+          ♪
+        </button>
+        <button
           className="app-header-action"
           onClick={handleRefresh}
           title="Refresh"
@@ -53,6 +63,7 @@ export function AppHeader() {
           &#9881;
         </button>
       </div>
+      {showBot && <PromptBot onClose={() => setShowBot(false)} />}
     </header>
   );
 }

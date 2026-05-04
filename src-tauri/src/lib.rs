@@ -36,6 +36,8 @@ pub fn run() {
             commands::database::db_execute,
             commands::database::db_run,
             commands::database::db_get_path,
+            commands::tts::generate_tts,
+            commands::tts::get_tts_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

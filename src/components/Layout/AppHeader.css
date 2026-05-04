@@ -86,3 +86,14 @@
   font-size: 18px;
   line-height: 1;
 }
+
+.app-header-voice {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.app-header-voice--active {
+  background: var(--active);
+  border-color: var(--accent, #7c6af7);
+  color: var(--accent, #7c6af7);
+}

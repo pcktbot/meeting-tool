@@ -107,6 +107,7 @@ export const contributionEntries = sqliteTable("contribution_entries", {
   audioSizeBytes: integer("audio_size_bytes"),
   audioExpiresAt: integer("audio_expires_at", { mode: "timestamp" }),
   audioDeletedAt: integer("audio_deleted_at", { mode: "timestamp" }),
+  ttsAudioFilePath: text("tts_audio_file_path"),
   entryDate: text("entry_date").notNull(),
   createdAt: integer("created_at", { mode: "timestamp" })
     .$defaultFn(() => new Date())
@@ -140,6 +141,11 @@ export const contributionSummaries = sqliteTable("contribution_summaries", {
   dateFrom: text("date_from").notNull(),
   dateTo: text("date_to").notNull(),
   entryIds: text("entry_ids").notNull().default("[]"),
+  ttsAudioFilePath: text("tts_audio_file_path"),
+  ttsAudioDuration: integer("tts_audio_duration"),
+  ttsAudioSizeBytes: integer("tts_audio_size_bytes"),
+  ttsAudioExpiresAt: integer("tts_audio_expires_at", { mode: "timestamp" }),
+  ttsAudioDeletedAt: integer("tts_audio_deleted_at", { mode: "timestamp" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .$defaultFn(() => new Date())
     .notNull(),

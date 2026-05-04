@@ -69,6 +69,32 @@ pub fn init_db(app: &AppHandle) -> Result<Arc<Mutex<Connection>>, String> {
             );
             CREATE INDEX IF NOT EXISTS idx_contribution_highlights_entry_id ON contribution_highlights(contribution_entry_id);",
         ),
+        // TTS audio columns on contribution_entries (separate from user-recorded audio_file_path)
+        (
+            "SELECT COUNT(*) FROM pragma_table_info('contribution_entries') WHERE name='tts_audio_file_path'",
+            "ALTER TABLE contribution_entries ADD COLUMN tts_audio_file_path TEXT",
+        ),
+        // TTS audio columns on contribution_summaries
+        (
+            "SELECT COUNT(*) FROM pragma_table_info('contribution_summaries') WHERE name='tts_audio_file_path'",
+            "ALTER TABLE contribution_summaries ADD COLUMN tts_audio_file_path TEXT",
+        ),
+        (
+            "SELECT COUNT(*) FROM pragma_table_info('contribution_summaries') WHERE name='tts_audio_duration'",
+            "ALTER TABLE contribution_summaries ADD COLUMN tts_audio_duration INTEGER",
+        ),
+        (
+            "SELECT COUNT(*) FROM pragma_table_info('contribution_summaries') WHERE name='tts_audio_size_bytes'",
+            "ALTER TABLE contribution_summaries ADD COLUMN tts_audio_size_bytes INTEGER",
+        ),
+        (
+            "SELECT COUNT(*) FROM pragma_table_info('contribution_summaries') WHERE name='tts_audio_expires_at'",
+            "ALTER TABLE contribution_summaries ADD COLUMN tts_audio_expires_at INTEGER",
+        ),
+        (
+            "SELECT COUNT(*) FROM pragma_table_info('contribution_summaries') WHERE name='tts_audio_deleted_at'",
+            "ALTER TABLE contribution_summaries ADD COLUMN tts_audio_deleted_at INTEGER",
+        ),
     ];
     for (check_sql, alter_sql) in migrations {
         let needs_migration: bool = conn

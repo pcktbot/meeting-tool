@@ -4,6 +4,7 @@ import { useEditor, EditorContent, mergeAttributes } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import type { ContributionSummary } from "../../services/contributions";
+import { useAudioPlayer } from "../../hooks/useAudioPlayer";
 import "./ContributionSummaryCard.css";
 
 const CustomHighlight = Highlight.extend({
@@ -47,6 +48,38 @@ interface ContributionSummaryCardProps {
   readonly summary: ContributionSummary;
 }
 
+function TtsAudioBar({ summary }: { summary: ContributionSummary }) {
+  const hasTts = Boolean(summary.ttsAudioFilePath) && !summary.ttsAudioDeletedAt;
+  const player = useAudioPlayer(
+    hasTts ? (summary.ttsAudioFilePath ?? undefined) : undefined,
+    summary.ttsAudioDuration ?? null,
+  );
+
+  if (!hasTts) return null;
+
+  const fmt = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  return (
+    <div className="contrib-summary-tts-bar">
+      <button
+        className="contrib-summary-tts-toggle"
+        onClick={player.toggle}
+        disabled={player.isLoading}
+        type="button"
+      >
+        {player.isLoading ? "…" : player.isPlaying ? "Pause" : "▶"}
+      </button>
+      <span className="contrib-summary-tts-time">
+        {fmt(player.currentTime)} / {fmt(player.duration)}
+      </span>
+    </div>
+  );
+}
+
 export function ContributionSummaryCard({ summary }: ContributionSummaryCardProps) {
   const isTipTapJson = useMemo(() => {
     try {
@@ -70,6 +103,7 @@ export function ContributionSummaryCard({ summary }: ContributionSummaryCardProp
           {entryIds.length} {entryIds.length === 1 ? "entry" : "entries"}
         </span>
       </div>
+      <TtsAudioBar summary={summary} />
       {isTipTapJson
         ? <TipTapContent content={summary.content} />
         : <MarkdownContent content={summary.content} />}

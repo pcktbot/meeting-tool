@@ -19,6 +19,7 @@ export const SETTINGS = {
   THEME_HOVER: "theme_hover",
   THEME_ACTIVE: "theme_active",
   THEME_ACCENT: "theme_accent",
+  TTS_VOICE_ID: "tts_voice_id",
 } as const;
 
 export async function getSetting(key: string): Promise<string | null> {

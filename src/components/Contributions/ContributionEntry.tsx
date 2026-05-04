@@ -4,14 +4,20 @@ import {
   createContributionHighlight,
   replaceContributionHighlightsForEntry,
 } from "../../services/highlights";
+import {
+  updateEntryTtsAudio,
+} from "../../services/contributions";
 import type { ContributionEntry as EntryType } from "../../services/contributions";
 import { useAudioPlayer } from "../../hooks/useAudioPlayer";
+import { extractPlainText } from "../../utils/contentConverter";
+import { generateTts } from "../../services/tts";
 import { CleanContributionEntryButton } from "./CleanContributionEntryButton";
 import "./ContributionEntry.css";
 
 interface ContributionEntryProps {
   readonly entry: EntryType;
   readonly onUpdate: (id: string, content: string, contentFormat?: string) => Promise<void>;
+  readonly onEntryUpdated?: (updated: EntryType) => void;
   readonly onRemove: (id: string) => void;
   readonly readOnly?: boolean;
 }
@@ -19,18 +25,40 @@ interface ContributionEntryProps {
 export function ContributionEntry({
   entry,
   onUpdate,
+  onEntryUpdated,
   onRemove,
   readOnly = false,
 }: ContributionEntryProps) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [ttsState, setTtsState] = useState<"idle" | "generating" | "error">("idle");
+  const [ttsError, setTtsError] = useState<string | null>(null);
   const hasAudio = Boolean(entry.audioFilePath);
   const audioExpired = Boolean(entry.audioDeletedAt);
   const player = useAudioPlayer(
     !audioExpired ? entry.audioFilePath ?? undefined : undefined,
     entry.audioDuration ?? null,
   );
+  const ttsPlayer = useAudioPlayer(
+    entry.ttsAudioFilePath ?? undefined,
+    null,
+  );
+
+  const handleSpeak = useCallback(async () => {
+    setTtsState("generating");
+    setTtsError(null);
+    try {
+      const text = extractPlainText(entry.content, entry.contentFormat ?? "plain");
+      const path = await generateTts(text, `tts-entry-${entry.id}-${Date.now()}.wav`);
+      const updated = await updateEntryTtsAudio(entry.id, path);
+      onEntryUpdated?.(updated);
+      setTtsState("idle");
+    } catch (err) {
+      setTtsError(err instanceof Error ? err.message : String(err));
+      setTtsState("error");
+    }
+  }, [entry.id, entry.content, entry.contentFormat, onEntryUpdated]);
 
   const handleSave = useCallback(
     async (jsonContent: string) => {
@@ -175,6 +203,26 @@ export function ContributionEntry({
       </div>
       {!editing && !readOnly && (
         <div className="contrib-entry-controls">
+          <button
+            className="contrib-entry-speak"
+            onClick={handleSpeak}
+            disabled={ttsState === "generating"}
+            title={ttsError ?? "Read entry in your voice"}
+            type="button"
+          >
+            {ttsState === "generating" ? "…" : "♪"}
+          </button>
+          {entry.ttsAudioFilePath && ttsState === "idle" && (
+            <button
+              className="contrib-entry-tts-toggle"
+              onClick={ttsPlayer.toggle}
+              disabled={ttsPlayer.isLoading}
+              type="button"
+              title="Play TTS audio"
+            >
+              {ttsPlayer.isLoading ? "…" : ttsPlayer.isPlaying ? "⏸" : "▶"}
+            </button>
+          )}
           <button
             className="contrib-entry-edit"
             onClick={() => setEditing(true)}
