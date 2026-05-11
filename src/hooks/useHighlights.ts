@@ -2,11 +2,12 @@ import { useState, useCallback, useEffect } from "react";
 import {
   getAllHighlights,
   deleteHighlight,
-  type HighlightWithMeeting,
+  deleteContributionHighlight,
+  type HighlightListItem,
 } from "../services/highlights";
 
 export function useHighlights() {
-  const [highlights, setHighlights] = useState<HighlightWithMeeting[]>([]);
+  const [highlights, setHighlights] = useState<HighlightListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -27,15 +28,26 @@ export function useHighlights() {
   useEffect(() => {
     const handler = () => refresh();
     window.addEventListener("highlights-updated", handler);
-    return () => window.removeEventListener("highlights-updated", handler);
+    window.addEventListener("app-refresh", handler);
+    return () => {
+      window.removeEventListener("highlights-updated", handler);
+      window.removeEventListener("app-refresh", handler);
+    };
   }, [refresh]);
 
   const remove = useCallback(
     async (id: string) => {
-      await deleteHighlight(id);
+      const existing = highlights.find((item) => item.id === id);
+      if (!existing) return;
+
+      if (existing.targetType === "contribution") {
+        await deleteContributionHighlight(id);
+      } else {
+        await deleteHighlight(id);
+      }
       window.dispatchEvent(new CustomEvent("highlights-updated"));
     },
-    [],
+    [highlights],
   );
 
   return { highlights, loading, refresh, remove };

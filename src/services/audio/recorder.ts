@@ -1,4 +1,14 @@
-import type { AudioSourceConfig } from "./types";
+import type { AudioSourceConfig, RecordingStartResult } from "./types";
+
+class MissingSystemAudioError extends Error {
+  displaySurface?: string;
+
+  constructor(message: string, displaySurface?: string) {
+    super(message);
+    this.name = "MissingSystemAudioError";
+    this.displaySurface = displaySurface;
+  }
+}
 
 export class AudioRecorder {
   private mediaRecorder: MediaRecorder | null = null;
@@ -7,23 +17,27 @@ export class AudioRecorder {
   private startTime: number = 0;
   private analyser: AnalyserNode | null = null;
   private audioContext: AudioContext | null = null;
+  private mixAudioContext: AudioContext | null = null;
   private config: AudioSourceConfig = { source: "microphone" };
+  private readonly isMac = navigator.userAgent.includes("Mac");
 
-  async start(config?: AudioSourceConfig): Promise<void> {
+  async start(config?: AudioSourceConfig): Promise<RecordingStartResult> {
     this.config = config ?? { source: "microphone" };
     console.log("[AudioRecorder] Starting with config:", this.config);
 
     try {
-      const stream = await this.getAudioStream(config);
-      this.streams = [stream];
+      const { recordingStream, cleanupStreams, startResult } = await this.getAudioStream(
+        this.config,
+      );
+      this.streams = cleanupStreams;
 
       this.audioContext = new AudioContext();
-      const source = this.audioContext.createMediaStreamSource(stream);
+      const source = this.audioContext.createMediaStreamSource(recordingStream);
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.fftSize = 256;
       source.connect(this.analyser);
 
-      this.mediaRecorder = new MediaRecorder(stream, {
+      this.mediaRecorder = new MediaRecorder(recordingStream, {
         mimeType: "audio/webm;codecs=opus",
       });
 
@@ -50,6 +64,7 @@ export class AudioRecorder {
       this.mediaRecorder.start(1000);
       this.startTime = Date.now();
       console.log("[AudioRecorder] MediaRecorder started successfully");
+      return startResult;
     } catch (err) {
       console.error("[AudioRecorder] Failed to start:", err);
       this.cleanup();
@@ -57,20 +72,41 @@ export class AudioRecorder {
     }
   }
 
-  private async getAudioStream(config: AudioSourceConfig): Promise<MediaStream> {
+  private async getAudioStream(config: AudioSourceConfig): Promise<{
+    recordingStream: MediaStream;
+    cleanupStreams: MediaStream[];
+    startResult: RecordingStartResult;
+  }> {
+    if (this.isMac && config.source !== "microphone") {
+      const micCapture = await this.getMicrophoneStream(config.microphoneDeviceId);
+      return {
+        ...micCapture,
+        startResult: {
+          requestedSource: config.source,
+          actualSource: "microphone",
+          fallbackReason:
+            "System audio is not currently available in the macOS app runtime, so recording continued with microphone only.",
+        },
+      };
+    }
+
     switch (config.source) {
       case "microphone":
         return this.getMicrophoneStream(config.microphoneDeviceId);
       case "system":
-        return this.getSystemAudioStream();
+        return this.getSystemAudioWithMicrophoneFallback(config);
       case "both":
-        return this.getCombinedStream(config.microphoneDeviceId);
+        return this.getCombinedStreamWithFallback(config.microphoneDeviceId);
       default:
         return this.getMicrophoneStream();
     }
   }
 
-  private async getMicrophoneStream(deviceId?: string): Promise<MediaStream> {
+  private async getMicrophoneStream(deviceId?: string): Promise<{
+    recordingStream: MediaStream;
+    cleanupStreams: MediaStream[];
+    startResult: RecordingStartResult;
+  }> {
     console.log("[AudioRecorder] Requesting microphone access...");
     const constraints: MediaStreamConstraints = {
       audio: {
@@ -83,71 +119,175 @@ export class AudioRecorder {
     };
 
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    console.log("[AudioRecorder] Microphone access granted, tracks:", stream.getAudioTracks().length);
-    return stream;
+    console.log(
+      "[AudioRecorder] Microphone access granted, tracks:",
+      stream.getAudioTracks().length,
+    );
+    return {
+      recordingStream: stream,
+      cleanupStreams: [stream],
+      startResult: {
+        requestedSource: this.config.source,
+        actualSource: "microphone",
+      },
+    };
   }
 
-  private async getSystemAudioStream(): Promise<MediaStream> {
+  private async getSystemAudioStream(): Promise<{
+    recordingStream: MediaStream;
+    cleanupStreams: MediaStream[];
+  }> {
     console.log("[AudioRecorder] Requesting system audio (screen capture)...");
-    
-    // getDisplayMedia requires video, but we only care about audio
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: true, // Required but we won't use it
-      audio: {
-        channelCount: 2,
-        sampleRate: 48000,
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false,
-      } as MediaTrackConstraints,
-    });
 
-    // Stop video track immediately - we only want audio
-    stream.getVideoTracks().forEach((track) => {
-      console.log("[AudioRecorder] Stopping video track (not needed)");
-      track.stop();
-    });
+    const displayMediaOptions: DisplayMediaStreamOptions = {
+      // Keep the initial request permissive. Some runtimes omit the audio track
+      // entirely when stricter display/audio constraints are supplied up front.
+      video: true,
+      audio: true,
+    };
+    const nonStandardOptions = displayMediaOptions as DisplayMediaStreamOptions &
+      Record<string, unknown>;
+    nonStandardOptions.preferCurrentTab = false;
+    nonStandardOptions.selfBrowserSurface = "exclude";
+    nonStandardOptions.surfaceSwitching = "exclude";
+    nonStandardOptions.systemAudio = "include";
+    nonStandardOptions.windowAudio = "system";
+    nonStandardOptions.monitorTypeSurfaces = "include";
+
+    const stream =
+      await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
 
     const audioTracks = stream.getAudioTracks();
+    const displaySurface = stream
+      .getVideoTracks()
+      .at(0)
+      ?.getSettings().displaySurface;
+
+    console.log(
+      "[AudioRecorder] Display capture selected:",
+      displaySurface ?? "unknown",
+    );
+
     if (audioTracks.length === 0) {
-      throw new Error("No system audio track available. Make sure to check 'Share audio' in the picker.");
+      stream.getTracks().forEach((track) => track.stop());
+      throw this.createMissingSystemAudioError(displaySurface);
     }
 
-    console.log("[AudioRecorder] System audio access granted, tracks:", audioTracks.length);
-    
-    // Create a new stream with only audio
-    return new MediaStream(audioTracks);
+    console.log(
+      "[AudioRecorder] System audio access granted, tracks:",
+      audioTracks.length,
+    );
+
+    return {
+      recordingStream: new MediaStream(audioTracks),
+      cleanupStreams: [stream],
+    };
   }
 
-  private async getCombinedStream(micDeviceId?: string): Promise<MediaStream> {
+  private async getSystemAudioWithMicrophoneFallback(
+    config: AudioSourceConfig,
+  ): Promise<{
+    recordingStream: MediaStream;
+    cleanupStreams: MediaStream[];
+    startResult: RecordingStartResult;
+  }> {
+    try {
+      const systemCapture = await this.getSystemAudioStream();
+      return {
+        ...systemCapture,
+        startResult: {
+          requestedSource: config.source,
+          actualSource: "system",
+        },
+      };
+    } catch (err) {
+      if (this.shouldFallbackToMicrophone(err)) {
+        console.warn(
+          "[AudioRecorder] System audio unavailable, falling back to microphone",
+        );
+        const micCapture = await this.getMicrophoneStream(config.microphoneDeviceId);
+        return {
+          ...micCapture,
+          startResult: {
+            requestedSource: config.source,
+            actualSource: "microphone",
+            fallbackReason:
+              "System audio is not available in the macOS webview runtime for this app, so recording continued with microphone only.",
+          },
+        };
+      }
+
+      throw err;
+    }
+  }
+
+  private async getCombinedStreamWithFallback(micDeviceId?: string): Promise<{
+    recordingStream: MediaStream;
+    cleanupStreams: MediaStream[];
+    startResult: RecordingStartResult;
+  }> {
     console.log("[AudioRecorder] Setting up combined mic + system audio...");
-    
-    const [micStream, systemStream] = await Promise.all([
-      this.getMicrophoneStream(micDeviceId),
-      this.getSystemAudioStream(),
-    ]);
 
-    this.streams = [micStream, systemStream];
+    const micCapture = await this.getMicrophoneStream(micDeviceId);
+    let systemCapture: Awaited<ReturnType<typeof this.getSystemAudioStream>> | null =
+      null;
 
-    const audioContext = new AudioContext();
-    const destination = audioContext.createMediaStreamDestination();
+    try {
+      systemCapture = await this.getSystemAudioStream();
+    } catch (err) {
+      if (!this.shouldFallbackToMicrophone(err)) {
+        throw err;
+      }
 
-    const micSource = audioContext.createMediaStreamSource(micStream);
+      console.warn(
+        "[AudioRecorder] System audio unavailable, continuing with microphone only",
+      );
+      return {
+        recordingStream: micCapture.recordingStream,
+        cleanupStreams: micCapture.cleanupStreams,
+        startResult: {
+          requestedSource: "both",
+          actualSource: "microphone",
+          fallbackReason:
+            "System audio is not available in the macOS webview runtime for this app, so recording continued with microphone only.",
+        },
+      };
+    }
+
+    this.mixAudioContext = new AudioContext();
+    const destination = this.mixAudioContext.createMediaStreamDestination();
+
+    const micSource = this.mixAudioContext.createMediaStreamSource(
+      micCapture.recordingStream,
+    );
 
     // Create gain nodes to balance volumes
-    const micGain = audioContext.createGain();
-    const systemGain = audioContext.createGain();
+    const micGain = this.mixAudioContext.createGain();
+    const systemGain = this.mixAudioContext.createGain();
     micGain.gain.value = 1;
     systemGain.gain.value = 1;
 
     micSource.connect(micGain);
-    const systemSource = audioContext.createMediaStreamSource(systemStream);
+    const systemSource = this.mixAudioContext.createMediaStreamSource(
+      systemCapture.recordingStream,
+    );
     systemSource.connect(systemGain);
     micGain.connect(destination);
     systemGain.connect(destination);
 
     console.log("[AudioRecorder] Combined stream created");
-    return destination.stream;
+    return {
+      recordingStream: destination.stream,
+      cleanupStreams: [
+        ...micCapture.cleanupStreams,
+        ...systemCapture.cleanupStreams,
+        destination.stream,
+      ],
+      startResult: {
+        requestedSource: "both",
+        actualSource: "both",
+      },
+    };
   }
 
   async stop(): Promise<Blob> {
@@ -210,10 +350,26 @@ export class AudioRecorder {
       });
     });
     this.audioContext?.close();
+    this.mixAudioContext?.close();
     this.streams = [];
     this.audioContext = null;
+    this.mixAudioContext = null;
     this.analyser = null;
     this.mediaRecorder = null;
+  }
+
+  private shouldFallbackToMicrophone(err: unknown): err is MissingSystemAudioError {
+    return err instanceof MissingSystemAudioError;
+  }
+
+  private createMissingSystemAudioError(displaySurface?: string): MissingSystemAudioError {
+    const isMac = navigator.userAgent.includes("Mac");
+    const sharedTarget = displaySurface ? ` Shared target: ${displaySurface}.` : "";
+    const message = isMac
+      ? `System audio was not captured.${sharedTarget} This app is currently using webview-based screen capture, and on macOS that runtime may return a screen stream without any system-audio track. Microphone recording still works, but system audio needs a native macOS capture path to be reliable.`
+      : `No system audio track was captured.${sharedTarget} Re-open recording and make sure audio sharing is enabled in the picker.`;
+
+    return new MissingSystemAudioError(message, displaySurface);
   }
 }
 

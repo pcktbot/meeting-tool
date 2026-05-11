@@ -1,0 +1,137 @@
+.prompt-bot {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 320px;
+  background: var(--bg-secondary, #1e1e2e);
+  border: 1px solid var(--border, #3a3a5c);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  z-index: 100;
+}
+
+.prompt-bot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.prompt-bot-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary, #a0a0b8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.prompt-bot-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #a0a0b8);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0 0.25rem;
+  line-height: 1;
+}
+
+.prompt-bot-close:hover {
+  color: var(--text-primary, #e0e0f0);
+}
+
+.prompt-bot-input {
+  background: var(--bg-primary, #13131f);
+  border: 1px solid var(--border, #3a3a5c);
+  border-radius: 6px;
+  color: var(--text-primary, #e0e0f0);
+  font-size: 0.85rem;
+  padding: 0.5rem 0.6rem;
+  resize: none;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+.prompt-bot-input:focus {
+  outline: none;
+  border-color: var(--accent, #7c6af7);
+}
+
+.prompt-bot-input:disabled {
+  opacity: 0.5;
+}
+
+.prompt-bot-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+}
+
+.prompt-bot-player {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.prompt-bot-player-toggle {
+  background: var(--accent, #7c6af7);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.7rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.prompt-bot-player-toggle:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.prompt-bot-player-time {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #a0a0b8);
+  font-variant-numeric: tabular-nums;
+}
+
+.prompt-bot-status {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #a0a0b8);
+  flex: 1;
+  font-style: italic;
+}
+
+.prompt-bot-error {
+  font-size: 0.75rem;
+  color: #e06c75;
+  flex: 1;
+  cursor: help;
+}
+
+.prompt-bot-send {
+  background: var(--accent, #7c6af7);
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.65rem;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.prompt-bot-send:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

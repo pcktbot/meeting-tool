@@ -24,34 +24,6 @@
   --hl-purple-solid: #c298ff;
 }
 
-
-  
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-primary: #1a1a1a;
-    --bg-secondary: #242424;
-    --bg-sidebar: #1e1e1e;
-    --text-primary: #e8e8e8;
-    --text-secondary: #999999;
-    --border: #333333;
-    --hover: rgba(255, 255, 255, 0.06);
-    --active: rgba(255, 255, 255, 0.1);
-    --accent: #759FBC;
-
-    --hl-yellow: rgba(255, 237, 74, 0.30);
-    --hl-green: rgba(119, 221, 119, 0.25);
-    --hl-pink: rgba(255, 154, 162, 0.25);
-    --hl-blue: rgba(130, 177, 255, 0.25);
-    --hl-purple: rgba(194, 152, 255, 0.25);
-
-    --hl-yellow-solid: #d4c83e;
-    --hl-green-solid: #5fb85f;
-    --hl-pink-solid: #d47a82;
-    --hl-blue-solid: #6a93d4;
-    --hl-purple-solid: #9e7ad4;
-  }
-}
-
 * {
   box-sizing: border-box;
 }

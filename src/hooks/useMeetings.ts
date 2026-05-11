@@ -25,7 +25,11 @@ export function useMeetings() {
   useEffect(() => {
     const handler = () => { refresh(); };
     window.addEventListener("meetings-updated", handler);
-    return () => window.removeEventListener("meetings-updated", handler);
+    window.addEventListener("app-refresh", handler);
+    return () => {
+      window.removeEventListener("meetings-updated", handler);
+      window.removeEventListener("app-refresh", handler);
+    };
   }, [refresh]);
 
   const remove = useCallback(
@@ -72,7 +76,11 @@ export function useMeetingDetail(meetingId: string | undefined) {
   useEffect(() => {
     const handler = () => { refresh(); };
     window.addEventListener("meetings-updated", handler);
-    return () => window.removeEventListener("meetings-updated", handler);
+    window.addEventListener("app-refresh", handler);
+    return () => {
+      window.removeEventListener("meetings-updated", handler);
+      window.removeEventListener("app-refresh", handler);
+    };
   }, [refresh]);
 
   return { details, loading, refresh };

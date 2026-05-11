@@ -33,6 +33,22 @@ bun tauri build
 | `bun run tsc --noEmit` | Type check |
 | `bun run db:new-migration <name>` | Create a new numbered SQL migration |
 
+## MCP Server (optional)
+
+The MCP server lives in `mcp-server/` and can be started with:
+
+```sh
+cd mcp-server
+bun run start
+```
+
+Contribution-related tools include:
+
+- `create_contribution_entry`
+- `update_contribution_entry`
+- `append_contribution_entry_item` (append text by `id` or `date`, defaults to bullet append)
+- `list_contribution_entries`
+
 ## Tech Stack
 
 - **Tauri v2 / Rust** — native desktop shell, file system access, audio processing

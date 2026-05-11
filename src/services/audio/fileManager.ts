@@ -4,6 +4,7 @@ import {
   mkdir,
   exists,
   copyFile,
+  remove,
 } from "@tauri-apps/plugin-fs";
 import { appDataDir, join } from "@tauri-apps/api/path";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -31,6 +32,11 @@ export async function saveAudioFile(
 
 export async function loadAudioFile(filePath: string): Promise<Uint8Array> {
   return await readFile(filePath);
+}
+
+export async function deleteAudioFile(filePath: string): Promise<void> {
+  if (!(await exists(filePath))) return;
+  await remove(filePath);
 }
 
 export async function importAudioFile(): Promise<{

@@ -1,4 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { cleanupTextToTipTapDoc } from "../utils/contentConverter";
 
 const MEETING_SUMMARY_PROMPT = `You are a meeting summarization assistant. Given the following meeting transcription, produce a structured summary with these sections:
 
@@ -17,33 +19,30 @@ List any participants mentioned by name.
 Transcription:
 `;
 
+const TRANSCRIPT_CLEANUP_PROMPT = `You are editing a raw meeting transcript for readability.
+
+Rules:
+- Preserve meaning.
+- Do not summarize.
+- Do not remove important details.
+- Remove spoken formatting commands like "paragraph break" or "new paragraph".
+- Improve punctuation and paragraph breaks.
+- Keep uncertain or messy wording if the meaning is unclear rather than inventing details.
+- Return only the cleaned transcript text.
+
+Transcript:
+`;
+
 export async function summarizeMeeting(
   transcriptionText: string,
   apiKey: string,
   model: string = "claude-sonnet-4-20250514",
 ): Promise<string> {
-  const anthropic = new Anthropic({
+  return invoke<string>("summarize_meeting", {
     apiKey,
-    dangerouslyAllowBrowser: true,
-  });
-
-  const message = await anthropic.messages.create({
+    transcriptText: transcriptionText,
     model,
-    max_tokens: 4096,
-    messages: [
-      {
-        role: "user",
-        content: MEETING_SUMMARY_PROMPT + transcriptionText,
-      },
-    ],
   });
-
-  const textBlock = message.content.find((block) => block.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("No text content in Claude response");
-  }
-
-  return textBlock.text;
 }
 
 export async function summarizeWithStreaming(
@@ -52,31 +51,66 @@ export async function summarizeWithStreaming(
   onChunk: (text: string) => void,
   model: string = "claude-sonnet-4-20250514",
 ): Promise<string> {
-  const anthropic = new Anthropic({
-    apiKey,
-    dangerouslyAllowBrowser: true,
+  const unlisten = await listen<string>("anthropic-stream-chunk", (event) => {
+    onChunk(event.payload);
   });
 
-  const stream = anthropic.messages.stream({
-    model,
-    max_tokens: 4096,
-    messages: [
-      {
-        role: "user",
-        content: MEETING_SUMMARY_PROMPT + transcriptionText,
-      },
-    ],
-  });
-
-  let fullText = "";
-
-  stream.on("text", (text) => {
-    fullText += text;
-    onChunk(text);
-  });
-
-  await stream.finalMessage();
-  return fullText;
+  try {
+    return await invoke<string>("summarize_with_streaming", {
+      apiKey,
+      transcriptText: transcriptionText,
+      model,
+    });
+  } finally {
+    unlisten();
+  }
 }
 
-export { MEETING_SUMMARY_PROMPT };
+export async function cleanTranscript(
+  transcriptText: string,
+  apiKey: string,
+  stylePrompt: string = "",
+  model: string = "claude-sonnet-4-20250514",
+): Promise<{ plainText: string; jsonContent: string }> {
+  const plainText = await invoke<string>("clean_transcript", {
+    apiKey,
+    transcriptText,
+    stylePrompt,
+    model,
+  });
+
+  const jsonContent = JSON.stringify(cleanupTextToTipTapDoc(plainText));
+  return { plainText, jsonContent };
+}
+
+const CONTRIBUTIONS_SUMMARY_PROMPT = `You are summarizing a person's work log entries for a given date range. Produce a concise professional summary suitable for a performance review or status report.
+
+Include:
+## What I worked on
+- Key themes, projects, and accomplishments
+
+## Notable contributions
+- Specific wins, completions, or impact items worth highlighting
+
+## Patterns and focus areas
+- Recurring topics or areas of concentration
+
+Write in first person. Be specific but concise. Do not invent details — only use what is in the entries.
+
+Entries:
+`;
+
+export async function summarizeContributions(
+  entriesText: string,
+  apiKey: string,
+  model: string = "claude-sonnet-4-20250514",
+): Promise<string> {
+  return invoke<string>("claude_complete", {
+    apiKey,
+    userContent: CONTRIBUTIONS_SUMMARY_PROMPT + entriesText,
+    system: null,
+    model,
+  });
+}
+
+export { MEETING_SUMMARY_PROMPT, TRANSCRIPT_CLEANUP_PROMPT };

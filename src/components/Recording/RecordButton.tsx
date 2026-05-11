@@ -33,14 +33,20 @@ export function RecordButton() {
       try {
         await startRecording();
       } catch (err) {
+        console.error("Failed to start recording:", err);
+
         if (err instanceof Error && err.name === "NotAllowedError") {
           alert(
-            "Microphone access denied. Please grant microphone permission in System Settings > Privacy & Security > Microphone."
+            "Recording permission was denied. In macOS System Settings > Privacy & Security, allow Daily Work Diary to access your microphone, then try again.",
           );
-        } else {
-          console.error("Failed to start recording:", err);
-          alert("Failed to start recording. Please check your microphone.");
+          return;
         }
+
+        alert(
+          err instanceof Error
+            ? err.message
+            : "Failed to start recording.",
+        );
       }
     }
   };

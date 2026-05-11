@@ -2,7 +2,7 @@ import { useEditor, EditorContent, mergeAttributes } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { EditorToolbar } from "./EditorToolbar";
 import { HighlightColorPicker } from "./HighlightColorPicker";
 import { loadTipTapContent } from "../../utils/contentConverter";
@@ -35,9 +35,10 @@ export type HighlightColor = (typeof HIGHLIGHT_COLORS)[number]["name"];
 interface RichTextEditorProps {
   content: string;
   contentFormat: string;
-  section: "transcription" | "summary";
+  section: "transcription" | "summary" | "entry";
   editable: boolean;
   onSave?: (jsonContent: string) => Promise<void>;
+  onShortcutSave?: () => void;
   onHighlightAdd?: (data: {
     color: string;
     textContent: string;
@@ -53,12 +54,32 @@ export function RichTextEditor({
   section,
   editable,
   onSave,
+  onShortcutSave,
   onHighlightAdd,
   onHighlightRemove,
 }: RichTextEditorProps) {
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastAppliedContentRef = useRef<string | null>(null);
+  const editorRef = useRef<TiptapEditor | null>(null);
+  const initialContent = useMemo(
+    () => loadTipTapContent(content, contentFormat, section),
+    [content, contentFormat, section],
+  );
+  const serializedInitialContent = useMemo(
+    () => JSON.stringify(initialContent),
+    [initialContent],
+  );
 
-  const initialContent = loadTipTapContent(content, contentFormat, section);
+  const flushSave = useCallback(async () => {
+    if (!editorRef.current || !onSave) return;
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+
+    const json = editorRef.current.getJSON();
+    await onSave(JSON.stringify(json));
+  }, [onSave]);
 
   const editor = useEditor({
     extensions: [
@@ -84,13 +105,51 @@ export function RichTextEditor({
         onSave(JSON.stringify(json));
       }, 1000);
     },
+    editorProps: {
+      handleKeyDown: (_view, event) => {
+        if (!editable || !onSave) return false;
+
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
+          event.preventDefault();
+          void flushSave().then(() => {
+            onShortcutSave?.();
+          });
+          return true;
+        }
+
+        return false;
+      },
+    },
   });
+
+  useEffect(() => {
+    editorRef.current = editor ?? null;
+    return () => {
+      editorRef.current = null;
+    };
+  }, [editor]);
 
   useEffect(() => {
     if (editor) {
       editor.setEditable(editable);
     }
   }, [editor, editable]);
+
+  useEffect(() => {
+    if (!editor) return;
+    if (lastAppliedContentRef.current === serializedInitialContent) {
+      return;
+    }
+
+    const currentContent = JSON.stringify(editor.getJSON());
+    if (currentContent === serializedInitialContent) {
+      lastAppliedContentRef.current = serializedInitialContent;
+      return;
+    }
+
+    editor.commands.setContent(initialContent, { emitUpdate: false });
+    lastAppliedContentRef.current = serializedInitialContent;
+  }, [editor, initialContent, serializedInitialContent]);
 
   useEffect(() => {
     return () => {

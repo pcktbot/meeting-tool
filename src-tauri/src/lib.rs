@@ -22,6 +22,13 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::anthropic::claude_complete,
+            commands::anthropic::clean_transcript,
+            commands::anthropic::summarize_meeting,
+            commands::anthropic::summarize_with_streaming,
+            commands::backup::export_text_backup,
+            commands::backup::get_text_backup_directory,
+            commands::backup::open_text_backup_directory,
             commands::transcribe::transcribe_file,
             commands::model::get_model_status,
             commands::model::download_model,
@@ -29,6 +36,8 @@ pub fn run() {
             commands::database::db_execute,
             commands::database::db_run,
             commands::database::db_get_path,
+            commands::tts::generate_tts,
+            commands::tts::get_tts_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

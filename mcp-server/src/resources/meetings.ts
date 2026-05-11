@@ -7,7 +7,10 @@ export function registerMeetingResources(server: McpServer) {
   server.resource(
     "meetings-list",
     "meeting://list",
-    "List of all meetings with metadata",
+    {
+      description: "List of all meetings with metadata",
+      mimeType: "application/json",
+    },
     async (uri) => {
       const meetings = await db
         .select()
@@ -30,7 +33,10 @@ export function registerMeetingResources(server: McpServer) {
   server.resource(
     "meeting",
     new ResourceTemplate("meeting:///{id}", { list: undefined }),
-    "A specific meeting with all its details",
+    {
+      description: "A specific meeting with all its details",
+      mimeType: "application/json",
+    },
     async (uri, { id }) => {
       const meetingId = id as string;
       const [meeting] = await db

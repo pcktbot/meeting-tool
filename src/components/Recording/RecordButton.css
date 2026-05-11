@@ -47,3 +47,12 @@
   font-variant-numeric: tabular-nums;
   color: var(--text-secondary);
 }
+
+.record-fallback-note {
+  max-width: 420px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--text-secondary);
+}

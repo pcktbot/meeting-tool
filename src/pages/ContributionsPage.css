@@ -1,0 +1,170 @@
+.contributions-page {
+  min-width: 0;
+}
+
+.contributions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.contributions-page-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.contributions-date-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.contributions-date-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.contributions-date-btn:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.contributions-date-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.contributions-date-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 200px;
+  text-align: center;
+}
+
+.contributions-today-btn {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+}
+
+.contributions-today-btn:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.contributions-today-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Two-column layout */
+.contributions-columns {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+.contributions-col {
+  flex: 1;
+  min-width: 0;
+  max-width: 580px;
+}
+
+.contributions-col--prev {
+  opacity: 0.65;
+  padding-right: 28px;
+}
+
+.contributions-col--current {
+  /* no extra style needed */
+}
+
+.contributions-col--current .diary-capture {
+  margin-bottom: 18px;
+}
+
+.contributions-col-date {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+
+.contributions-col--current .contributions-col-date {
+  color: var(--accent);
+}
+
+.contributions-loading {
+  color: var(--text-secondary);
+  padding: 40px;
+  text-align: center;
+}
+
+.contributions-empty {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 12px 0;
+}
+
+.contributions-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.contributions-summaries {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contributions-todos {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contributions-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 6px 0;
+}
+
+.contributions-section-empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* read-only entry style */
+.contrib-entry--readonly {
+  cursor: default;
+}
+
+.contrib-entry--readonly:hover {
+  background: var(--bg-primary);
+}

@@ -17,7 +17,7 @@ export function HighlightsPage() {
 
       {highlights.length === 0 ? (
         <p className="highlights-page-empty">
-          No highlights yet. Select text in a meeting's transcription or summary
+          No highlights yet. Select text in a diary entry or legacy transcript
           to highlight it.
         </p>
       ) : (
@@ -26,7 +26,16 @@ export function HighlightsPage() {
             <HighlightCard
               key={h.id}
               highlight={h}
-              onNavigate={() => navigate(`/meeting/${h.meetingId}`)}
+              onNavigate={() => {
+                if (h.targetType === "contribution" && h.contributionDate) {
+                  navigate(
+                    `/contributions?date=${encodeURIComponent(h.contributionDate)}&entry=${encodeURIComponent(h.targetId)}`,
+                  );
+                  return;
+                }
+
+                navigate(`/meeting/${h.targetId}`);
+              }}
               onRemove={() => remove(h.id)}
             />
           ))}

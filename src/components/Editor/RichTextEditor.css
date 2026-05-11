@@ -22,7 +22,11 @@
 }
 
 .rich-text-editor .tiptap p {
-  margin: 4px 0;
+  margin: 0 0 14px 0;
+}
+
+.rich-text-editor .tiptap p:last-child {
+  margin-bottom: 0;
 }
 
 .rich-text-editor .tiptap h2 {

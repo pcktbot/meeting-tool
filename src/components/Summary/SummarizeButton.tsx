@@ -2,11 +2,13 @@ import { useState } from "react";
 import { summarizeWithStreaming, MEETING_SUMMARY_PROMPT } from "../../services/summarization";
 import { saveSummary } from "../../services/meetings";
 import { useSettings } from "../../hooks/useSettings";
+import { extractPlainText } from "../../utils/contentConverter";
 
 interface SummarizeButtonProps {
   meetingId: string;
   transcriptionId: string;
   transcriptionContent: string;
+  transcriptionContentFormat?: string;
   onSummaryComplete: () => void;
   onStreamChunk?: (fullText: string) => void;
 }
@@ -15,6 +17,7 @@ export function SummarizeButton({
   meetingId,
   transcriptionId,
   transcriptionContent,
+  transcriptionContentFormat = "plain",
   onSummaryComplete,
   onStreamChunk,
 }: SummarizeButtonProps) {
@@ -33,8 +36,12 @@ export function SummarizeButton({
 
     try {
       const model = "claude-sonnet-4-20250514";
-      const fullText = await summarizeWithStreaming(
+      const plainTextTranscript = extractPlainText(
         transcriptionContent,
+        transcriptionContentFormat,
+      );
+      const fullText = await summarizeWithStreaming(
+        plainTextTranscript,
         apiKey,
         (chunk) => {
           onStreamChunk?.(chunk);
@@ -47,7 +54,7 @@ export function SummarizeButton({
         transcriptionId,
         fullText,
         model,
-        MEETING_SUMMARY_PROMPT,
+        `${MEETING_SUMMARY_PROMPT}${plainTextTranscript}`,
       );
 
       onSummaryComplete();

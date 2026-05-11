@@ -1,0 +1,61 @@
+.contrib-todo-input {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.contrib-todo-input-editor-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.contrib-todo-input-editor-wrap .tiptap {
+  outline: none;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 0 0 6px 6px;
+  padding: 10px 12px;
+  min-height: 60px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--bg-primary);
+}
+
+.contrib-todo-input-editor-wrap .tiptap:focus {
+  border-color: var(--accent);
+}
+
+.contrib-todo-input-editor-wrap .tiptap p {
+  margin: 2px 0;
+}
+
+.contrib-todo-input-editor-wrap .tiptap p.is-editor-empty:first-child::before {
+  content: "Capture next steps or ideas";
+  color: var(--text-secondary);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.contrib-todo-input-btn {
+  padding: 10px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.contrib-todo-input-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.contrib-todo-input-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

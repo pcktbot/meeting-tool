@@ -21,3 +21,9 @@ export interface AudioSourceConfig {
   source: AudioSource;
   microphoneDeviceId?: string;
 }
+
+export interface RecordingStartResult {
+  requestedSource: AudioSource;
+  actualSource: AudioSource;
+  fallbackReason?: string;
+}

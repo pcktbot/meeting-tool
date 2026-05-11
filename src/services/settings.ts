@@ -3,10 +3,23 @@ import { eq } from "drizzle-orm";
 
 export const SETTINGS = {
   ANTHROPIC_API_KEY: "anthropic_api_key",
+  CLAUDE_CLEANUP_STYLE_PROMPT: "claude_cleanup_style_prompt",
   WHISPER_MODEL: "whisper_model",
   DEFAULT_LANGUAGE: "default_language",
   AUDIO_SOURCE: "audio_source",
   MICROPHONE_DEVICE_ID: "microphone_device_id",
+  AUDIO_RETENTION_DAYS: "audio_retention_days",
+  TEXT_BACKUP_LAST_RUN_ON: "text_backup_last_run_on",
+  THEME_BG_PRIMARY: "theme_bg_primary",
+  THEME_BG_SECONDARY: "theme_bg_secondary",
+  THEME_BG_SIDEBAR: "theme_bg_sidebar",
+  THEME_TEXT_PRIMARY: "theme_text_primary",
+  THEME_TEXT_SECONDARY: "theme_text_secondary",
+  THEME_BORDER: "theme_border",
+  THEME_HOVER: "theme_hover",
+  THEME_ACTIVE: "theme_active",
+  THEME_ACCENT: "theme_accent",
+  TTS_VOICE_ID: "tts_voice_id",
 } as const;
 
 export async function getSetting(key: string): Promise<string | null> {
