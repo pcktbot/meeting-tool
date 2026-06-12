@@ -19,7 +19,11 @@ export function parseArgs(argv: string[]): ParsedArgs {
 
   for (let i = 1; i < argv.length; i++) {
     if (argv[i] === "--cache") {
-      cachePath = argv[i + 1];
+      const value = argv[i + 1];
+      if (value === undefined || value.startsWith("--")) {
+        throw new Error("--cache requires a path value");
+      }
+      cachePath = value;
       i++;
     } else if (argv[i] === "--device-code") {
       deviceCode = true;

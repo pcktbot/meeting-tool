@@ -101,10 +101,13 @@ async function loginDeviceCode(pca: PublicClientApplication): Promise<TokenResul
       process.stderr.write(`\n${response.message}\n\n`);
     },
   });
+  if (res === null) {
+    throw new Error("Device code flow returned no token");
+  }
   return {
-    accessToken: res!.accessToken,
-    expiresOn: res!.expiresOn ? res!.expiresOn.toISOString() : null,
-    account: res!.account?.username ?? null,
+    accessToken: res.accessToken,
+    expiresOn: res.expiresOn ? res.expiresOn.toISOString() : null,
+    account: res.account?.username ?? null,
   };
 }
 
@@ -112,9 +115,9 @@ async function loginAuthCode(pca: PublicClientApplication): Promise<TokenResult>
   // PKCE is required by this app registration.
   const { verifier, challenge } = await new CryptoProvider().generatePkceCodes();
 
-  let server: http.Server;
+  const server = http.createServer();
   const codePromise = new Promise<string>((resolve, reject) => {
-    server = http.createServer((req, res) => {
+    server.on("request", (req, res) => {
       const url = new URL(req.url ?? "/", REDIRECT_URI);
       const code = url.searchParams.get("code");
       const error = url.searchParams.get("error");
@@ -129,33 +132,37 @@ async function loginAuthCode(pca: PublicClientApplication): Promise<TokenResult>
       } else {
         res.writeHead(400, { "Content-Type": "text/html" });
         res.end("<html><body><h1>Invalid request</h1></body></html>");
+        reject(new Error("Redirect contained neither an auth code nor an error"));
       }
     });
     server.listen(3000, () => process.stderr.write("Waiting for sign-in on http://localhost:3000\n"));
   });
 
-  const authUrl = await pca.getAuthCodeUrl({
-    scopes: buildScopes(),
-    redirectUri: REDIRECT_URI,
-    codeChallenge: challenge,
-    codeChallengeMethod: "S256",
-  });
-  await open(authUrl);
+  try {
+    const authUrl = await pca.getAuthCodeUrl({
+      scopes: buildScopes(),
+      redirectUri: REDIRECT_URI,
+      codeChallenge: challenge,
+      codeChallengeMethod: "S256",
+    });
+    await open(authUrl);
 
-  const code = await codePromise;
-  server!.close();
+    const code = await codePromise;
 
-  const res = await pca.acquireTokenByCode({
-    code,
-    scopes: buildScopes(),
-    redirectUri: REDIRECT_URI,
-    codeVerifier: verifier,
-  });
-  return {
-    accessToken: res.accessToken,
-    expiresOn: res.expiresOn ? res.expiresOn.toISOString() : null,
-    account: res.account?.username ?? null,
-  };
+    const res = await pca.acquireTokenByCode({
+      code,
+      scopes: buildScopes(),
+      redirectUri: REDIRECT_URI,
+      codeVerifier: verifier,
+    });
+    return {
+      accessToken: res.accessToken,
+      expiresOn: res.expiresOn ? res.expiresOn.toISOString() : null,
+      account: res.account?.username ?? null,
+    };
+  } finally {
+    server.close();
+  }
 }
 
 export async function login(

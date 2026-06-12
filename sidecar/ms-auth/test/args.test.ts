@@ -28,3 +28,9 @@ test("parseArgs accepts status without a cache path", () => {
 test("parseArgs throws on an unknown command", () => {
   expect(() => parseArgs(["bogus"])).toThrow("Unknown command: bogus");
 });
+
+test("parseArgs throws when --cache has no path value", () => {
+  expect(() => parseArgs(["token", "--cache", "--device-code"])).toThrow(
+    "--cache requires a path value",
+  );
+});
