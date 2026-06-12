@@ -20,7 +20,6 @@ export const SETTINGS = {
   THEME_ACTIVE: "theme_active",
   THEME_ACCENT: "theme_accent",
   TTS_VOICE_ID: "tts_voice_id",
-  TEAMS_CHAT_ACCESS_TOKEN: "teams_chat_access_token",
   TEAMS_CHAT_SCAN_DAYS: "teams_chat_scan_days",
   TEAMS_CHAT_LAST_SCAN_AT: "teams_chat_last_scan_at",
 } as const;

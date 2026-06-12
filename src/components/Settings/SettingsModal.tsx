@@ -8,11 +8,10 @@ import {
   openTextBackupDirectory,
   runTextBackupNow,
 } from "../../services/backups";
+import { invoke } from "@tauri-apps/api/core";
 import {
-  getTeamsChatAccessToken,
   getTeamsChatLastScanAt,
   getTeamsChatScanDays,
-  setTeamsChatAccessToken,
   setTeamsChatScanDays,
 } from "../../services/teams";
 import "./SettingsModal.css";
@@ -52,7 +51,8 @@ export function SettingsForm() {
   const [lastBackupDate, setLastBackupDate] = useState<string | null>(null);
   const [backupStatus, setBackupStatus] = useState<string | null>(null);
   const [backupBusy, setBackupBusy] = useState(false);
-  const [teamsTokenInput, setTeamsTokenInput] = useState("");
+  const [teamsAccount, setTeamsAccount] = useState<string | null>(null);
+  const [teamsConnecting, setTeamsConnecting] = useState(false);
   const [teamsScanDaysInput, setTeamsScanDaysInput] = useState("7");
   const [teamsLastScanAt, setTeamsLastScanAt] = useState<string | null>(null);
   const [teamsStatus, setTeamsStatus] = useState<string | null>(null);
@@ -91,13 +91,8 @@ export function SettingsForm() {
   }, []);
 
   useEffect(() => {
-    Promise.all([
-      getTeamsChatAccessToken(),
-      getTeamsChatScanDays(),
-      getTeamsChatLastScanAt(),
-    ])
-      .then(([token, scanDays, lastScan]) => {
-        setTeamsTokenInput(token ?? "");
+    Promise.all([getTeamsChatScanDays(), getTeamsChatLastScanAt()])
+      .then(([scanDays, lastScan]) => {
         setTeamsScanDaysInput(scanDays);
         setTeamsLastScanAt(lastScan);
       })
@@ -105,6 +100,13 @@ export function SettingsForm() {
         console.error("Failed to load Teams settings:", err);
         setTeamsStatus("Could not load Teams settings.");
       });
+
+    invoke<string>("ms_auth_status")
+      .then((raw) => {
+        const parsed = JSON.parse(raw) as { connected: boolean; account: string | null };
+        setTeamsAccount(parsed.connected ? parsed.account : null);
+      })
+      .catch((err) => console.error("Failed to read Teams connection status:", err));
   }, []);
 
   const handleSave = async () => {
@@ -192,12 +194,31 @@ export function SettingsForm() {
   };
 
   const handleSaveTeams = async () => {
-    await Promise.all([
-      setTeamsChatAccessToken(teamsTokenInput),
-      setTeamsChatScanDays(teamsScanDaysInput),
-    ]);
-    setTeamsStatus("Teams chat settings saved.");
+    await setTeamsChatScanDays(teamsScanDaysInput);
+    setTeamsStatus("Teams settings saved.");
     setTimeout(() => setTeamsStatus(null), 2500);
+  };
+
+  const handleConnectTeams = async () => {
+    setTeamsConnecting(true);
+    setTeamsStatus(null);
+    try {
+      const raw = await invoke<string>("ms_auth_login", { deviceCode: false });
+      const parsed = JSON.parse(raw) as
+        | { account: string | null }
+        | { error: string; message?: string };
+      if ("error" in parsed) {
+        setTeamsStatus(parsed.message ?? `Sign-in failed: ${parsed.error}`);
+      } else {
+        setTeamsAccount(parsed.account);
+        setTeamsStatus("Microsoft account connected.");
+      }
+    } catch (err) {
+      console.error("Teams connect failed:", err);
+      setTeamsStatus(err instanceof Error ? err.message : "Sign-in failed.");
+    } finally {
+      setTeamsConnecting(false);
+    }
   };
 
   if (loading) return <p>Loading settings...</p>;
@@ -344,23 +365,21 @@ export function SettingsForm() {
           <div className="settings-section">
             <h3 className="settings-section-title">Teams Chat Import</h3>
             <div className="settings-field">
-              <label className="settings-label" htmlFor="teams-access-token">
-                Microsoft Graph Access Token
-              </label>
-              <textarea
-                id="teams-access-token"
-                className="settings-input settings-textarea"
-                value={teamsTokenInput}
-                onChange={(e) => setTeamsTokenInput(e.target.value)}
-                placeholder="Paste a delegated Graph access token with User.Read, Chat.Read, and offline_access."
-                rows={4}
-                spellCheck={false}
-                autoCapitalize="none"
-                autoCorrect="off"
-              />
+              <span className="settings-label">Microsoft Account</span>
+              <p className="settings-static-text">
+                {teamsAccount ? `Connected as ${teamsAccount}` : "Not connected."}
+              </p>
+              <button
+                className="settings-save-btn"
+                onClick={handleConnectTeams}
+                disabled={teamsConnecting}
+                type="button"
+              >
+                {teamsConnecting ? "Opening sign-in..." : teamsAccount ? "Reconnect" : "Connect Microsoft"}
+              </button>
               <p className="settings-hint">
-                This first pass reads only chats you can already access and imports
-                messages sent by you. Channel imports are intentionally disabled.
+                Opens a browser to sign in once. The token then refreshes silently;
+                imports are limited to chat messages you sent.
               </p>
             </div>
 
