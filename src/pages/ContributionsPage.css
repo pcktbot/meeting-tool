@@ -144,6 +144,20 @@
   gap: 10px;
 }
 
+.contributions-teams {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contributions-section-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .contributions-section-title {
   font-size: 11px;
   font-weight: 600;
@@ -158,6 +172,77 @@
   color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.6;
+}
+
+.contributions-secondary-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 10px;
+}
+
+.contributions-secondary-btn:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.contributions-secondary-btn:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.teams-message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.teams-message-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.teams-message-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.teams-message-body {
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.teams-message-actions {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.teams-message-link {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.teams-message-link:hover {
+  text-decoration: underline;
 }
 
 /* read-only entry style */

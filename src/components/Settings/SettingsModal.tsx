@@ -8,6 +8,13 @@ import {
   openTextBackupDirectory,
   runTextBackupNow,
 } from "../../services/backups";
+import {
+  getTeamsChatAccessToken,
+  getTeamsChatLastScanAt,
+  getTeamsChatScanDays,
+  setTeamsChatAccessToken,
+  setTeamsChatScanDays,
+} from "../../services/teams";
 import "./SettingsModal.css";
 
 const THEME_FIELDS = [
@@ -45,6 +52,10 @@ export function SettingsForm() {
   const [lastBackupDate, setLastBackupDate] = useState<string | null>(null);
   const [backupStatus, setBackupStatus] = useState<string | null>(null);
   const [backupBusy, setBackupBusy] = useState(false);
+  const [teamsTokenInput, setTeamsTokenInput] = useState("");
+  const [teamsScanDaysInput, setTeamsScanDaysInput] = useState("7");
+  const [teamsLastScanAt, setTeamsLastScanAt] = useState<string | null>(null);
+  const [teamsStatus, setTeamsStatus] = useState<string | null>(null);
   const [themeDrafts, setThemeDrafts] = useState<Partial<Record<keyof ThemeSettings, string>>>({});
   const colorInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -76,6 +87,23 @@ export function SettingsForm() {
       .catch((err) => {
         console.error("Failed to load backup settings:", err);
         setBackupStatus("Could not load backup folder.");
+      });
+  }, []);
+
+  useEffect(() => {
+    Promise.all([
+      getTeamsChatAccessToken(),
+      getTeamsChatScanDays(),
+      getTeamsChatLastScanAt(),
+    ])
+      .then(([token, scanDays, lastScan]) => {
+        setTeamsTokenInput(token ?? "");
+        setTeamsScanDaysInput(scanDays);
+        setTeamsLastScanAt(lastScan);
+      })
+      .catch((err) => {
+        console.error("Failed to load Teams settings:", err);
+        setTeamsStatus("Could not load Teams settings.");
       });
   }, []);
 
@@ -161,6 +189,15 @@ export function SettingsForm() {
         err instanceof Error ? err.message : "Could not open backup folder.",
       );
     }
+  };
+
+  const handleSaveTeams = async () => {
+    await Promise.all([
+      setTeamsChatAccessToken(teamsTokenInput),
+      setTeamsChatScanDays(teamsScanDaysInput),
+    ]);
+    setTeamsStatus("Teams chat settings saved.");
+    setTimeout(() => setTeamsStatus(null), 2500);
   };
 
   if (loading) return <p>Loading settings...</p>;
@@ -302,6 +339,68 @@ export function SettingsForm() {
             </div>
 
             {backupStatus && <p className="settings-hint">{backupStatus}</p>}
+          </div>
+
+          <div className="settings-section">
+            <h3 className="settings-section-title">Teams Chat Import</h3>
+            <div className="settings-field">
+              <label className="settings-label" htmlFor="teams-access-token">
+                Microsoft Graph Access Token
+              </label>
+              <textarea
+                id="teams-access-token"
+                className="settings-input settings-textarea"
+                value={teamsTokenInput}
+                onChange={(e) => setTeamsTokenInput(e.target.value)}
+                placeholder="Paste a delegated Graph access token with User.Read, Chat.Read, and offline_access."
+                rows={4}
+                spellCheck={false}
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+              <p className="settings-hint">
+                This first pass reads only chats you can already access and imports
+                messages sent by you. Channel imports are intentionally disabled.
+              </p>
+            </div>
+
+            <div className="settings-field">
+              <label className="settings-label" htmlFor="teams-scan-days">
+                Default Scan Window
+              </label>
+              <select
+                id="teams-scan-days"
+                className="settings-select"
+                value={teamsScanDaysInput}
+                onChange={(e) => setTeamsScanDaysInput(e.target.value)}
+              >
+                <option value="1">Today only</option>
+                <option value="3">Last 3 days</option>
+                <option value="7">Last 7 days</option>
+                <option value="14">Last 14 days</option>
+              </select>
+            </div>
+
+            <div className="settings-field">
+              <span className="settings-label">Last Teams Scan</span>
+              <p className="settings-static-text">
+                {teamsLastScanAt
+                  ? new Date(teamsLastScanAt).toLocaleString()
+                  : "No Teams scan has run yet."}
+              </p>
+            </div>
+
+            <div className="settings-actions">
+              <button
+                className="settings-save-btn"
+                onClick={handleSaveTeams}
+                type="button"
+              >
+                Save Teams Settings
+              </button>
+            </div>
+
+            {teamsStatus && <p className="settings-hint">{teamsStatus}</p>}
           </div>
         </div>
 
