@@ -1,6 +1,7 @@
 import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { getDb, schema } from "../db";
 import { getSetting, setSetting, SETTINGS } from "./settings";
+import { invoke } from "@tauri-apps/api/core";
 
 const GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0";
 const DEFAULT_SCAN_DAYS = 7;
@@ -113,12 +114,45 @@ export async function setTeamsChatScanDays(days: string): Promise<void> {
   await setSetting(SETTINGS.TEAMS_CHAT_SCAN_DAYS, days);
 }
 
-export async function getTeamsChatAccessToken(): Promise<string | null> {
-  return getSetting(SETTINGS.TEAMS_CHAT_ACCESS_TOKEN);
+interface SidecarTokenOk {
+  accessToken: string;
+  expiresOn: string | null;
+  account: string | null;
+}
+interface SidecarError {
+  error: string;
+  message?: string;
+  reason?: string;
 }
 
-export async function setTeamsChatAccessToken(token: string): Promise<void> {
-  await setSetting(SETTINGS.TEAMS_CHAT_ACCESS_TOKEN, token.trim());
+export class TeamsAuthRequiredError extends Error {
+  constructor() {
+    super("Connect Microsoft in Settings to scan Teams chats.");
+    this.name = "TeamsAuthRequiredError";
+  }
+}
+
+let cachedToken: { value: string; expiresAtMs: number } | null = null;
+
+export async function getGraphToken(): Promise<string> {
+  // 60s safety margin so we never hand back an about-to-expire token.
+  if (cachedToken && cachedToken.expiresAtMs - 60_000 > Date.now()) {
+    return cachedToken.value;
+  }
+
+  const raw = await invoke<string>("ms_auth_token");
+  const parsed = JSON.parse(raw) as SidecarTokenOk | SidecarError;
+
+  if ("error" in parsed) {
+    if (parsed.error === "interaction_required") throw new TeamsAuthRequiredError();
+    throw new Error(parsed.message ?? `Teams auth failed: ${parsed.error}`);
+  }
+
+  cachedToken = {
+    value: parsed.accessToken,
+    expiresAtMs: parsed.expiresOn ? Date.parse(parsed.expiresOn) : Date.now() + 5 * 60_000,
+  };
+  return cachedToken.value;
 }
 
 export async function getTeamsChatLastScanAt(): Promise<string | null> {
@@ -171,10 +205,7 @@ async function listRecentMessagesForChat(
 }
 
 export async function scanTeamsChats(days?: number): Promise<TeamsChatScanResult> {
-  const accessToken = await getTeamsChatAccessToken();
-  if (!accessToken) {
-    throw new Error("Add a Microsoft Graph access token in Settings before scanning Teams chats.");
-  }
+  const accessToken = await getGraphToken();
 
   const scanDays = days ?? (Number(await getTeamsChatScanDays()) || DEFAULT_SCAN_DAYS);
   const fromIso = isoDateForLocalDay(dateDaysAgo(scanDays));
