@@ -1,6 +1,14 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { cleanupTextToTipTapDoc } from "../utils/contentConverter";
+import { getSetting, SETTINGS, DEFAULT_CLAUDE_MODEL } from "./settings";
+
+// Resolve the Claude model to use: an explicit argument wins, otherwise the
+// user's saved Settings value, otherwise the built-in default.
+async function resolveModel(model?: string): Promise<string> {
+  if (model) return model;
+  return (await getSetting(SETTINGS.CLAUDE_MODEL)) || DEFAULT_CLAUDE_MODEL;
+}
 
 const MEETING_SUMMARY_PROMPT = `You are a meeting summarization assistant. Given the following meeting transcription, produce a structured summary with these sections:
 
@@ -36,12 +44,12 @@ Transcript:
 export async function summarizeMeeting(
   transcriptionText: string,
   apiKey: string,
-  model: string = "claude-sonnet-4-20250514",
+  model?: string,
 ): Promise<string> {
   return invoke<string>("summarize_meeting", {
     apiKey,
     transcriptText: transcriptionText,
-    model,
+    model: await resolveModel(model),
   });
 }
 
@@ -49,8 +57,9 @@ export async function summarizeWithStreaming(
   transcriptionText: string,
   apiKey: string,
   onChunk: (text: string) => void,
-  model: string = "claude-sonnet-4-20250514",
+  model?: string,
 ): Promise<string> {
+  const resolvedModel = await resolveModel(model);
   const unlisten = await listen<string>("anthropic-stream-chunk", (event) => {
     onChunk(event.payload);
   });
@@ -59,7 +68,7 @@ export async function summarizeWithStreaming(
     return await invoke<string>("summarize_with_streaming", {
       apiKey,
       transcriptText: transcriptionText,
-      model,
+      model: resolvedModel,
     });
   } finally {
     unlisten();
@@ -70,13 +79,13 @@ export async function cleanTranscript(
   transcriptText: string,
   apiKey: string,
   stylePrompt: string = "",
-  model: string = "claude-sonnet-4-20250514",
+  model?: string,
 ): Promise<{ plainText: string; jsonContent: string }> {
   const plainText = await invoke<string>("clean_transcript", {
     apiKey,
     transcriptText,
     stylePrompt,
-    model,
+    model: await resolveModel(model),
   });
 
   const jsonContent = JSON.stringify(cleanupTextToTipTapDoc(plainText));
@@ -103,13 +112,13 @@ Entries:
 export async function summarizeContributions(
   entriesText: string,
   apiKey: string,
-  model: string = "claude-sonnet-4-20250514",
+  model?: string,
 ): Promise<string> {
   return invoke<string>("claude_complete", {
     apiKey,
     userContent: CONTRIBUTIONS_SUMMARY_PROMPT + entriesText,
     system: null,
-    model,
+    model: await resolveModel(model),
   });
 }
 

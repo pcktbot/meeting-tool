@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import {
   cleanContentWithClaude,
   getApiKey,
+  getClaudeModel,
   getCleanupStylePrompt,
 } from "./cleanup.ts";
 
@@ -95,8 +96,7 @@ export function registerSummarizationTools(server: McpServer) {
       model: z
         .string()
         .optional()
-        .default("claude-sonnet-4-20250514")
-        .describe("Claude model to use"),
+        .describe("Claude model override. Defaults to the saved claude_model setting, else claude-sonnet-4-6."),
     },
     async ({ meetingId, apiKey, model }) => {
       // Get transcription
@@ -130,9 +130,10 @@ export function registerSummarizationTools(server: McpServer) {
         };
       }
 
+      const resolvedModel = await getClaudeModel(model);
       const anthropic = new Anthropic({ apiKey: key });
       const message = await anthropic.messages.create({
-        model,
+        model: resolvedModel,
         max_tokens: 4096,
         messages: [
           {
@@ -162,7 +163,7 @@ export function registerSummarizationTools(server: McpServer) {
           transcriptionId: transcription.id,
           content: summaryText,
           contentFormat: "plain",
-          modelUsed: model,
+          modelUsed: resolvedModel,
           promptUsed: "meeting_summary_v1",
         })
         .returning();
@@ -197,8 +198,7 @@ export function registerSummarizationTools(server: McpServer) {
       model: z
         .string()
         .optional()
-        .default("claude-sonnet-4-20250514")
-        .describe("Claude model to use"),
+        .describe("Claude model override. Defaults to the saved claude_model setting, else claude-sonnet-4-6."),
       stylePrompt: z
         .string()
         .optional()
@@ -243,7 +243,7 @@ export function registerSummarizationTools(server: McpServer) {
           content: transcription.content,
           contentFormat: transcription.contentFormat ?? "plain",
           apiKey,
-          model,
+          model: await getClaudeModel(model),
           stylePrompt,
         });
 

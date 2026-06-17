@@ -23,7 +23,7 @@ export function SummarizeButton({
 }: SummarizeButtonProps) {
   const [summarizing, setSummarizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { apiKey } = useSettings();
+  const { apiKey, claudeModel } = useSettings();
 
   const handleSummarize = async () => {
     if (!apiKey) {
@@ -35,7 +35,7 @@ export function SummarizeButton({
     setError(null);
 
     try {
-      const model = "claude-sonnet-4-20250514";
+      const model = claudeModel;
       const plainTextTranscript = extractPlainText(
         transcriptionContent,
         transcriptionContentFormat,

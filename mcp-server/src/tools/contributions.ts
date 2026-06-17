@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { db, schema } from "../db.ts";
 import { eq, desc, and, gte, lte, isNotNull } from "drizzle-orm";
-import { cleanContentWithClaude } from "./cleanup.ts";
+import { cleanContentWithClaude, getClaudeModel } from "./cleanup.ts";
 
 type TiptapNode = {
   type: string;
@@ -111,8 +111,7 @@ export function registerContributionTools(server: McpServer) {
       model: z
         .string()
         .optional()
-        .default("claude-sonnet-4-20250514")
-        .describe("Claude model to use"),
+        .describe("Claude model override. Defaults to the saved claude_model setting, else claude-sonnet-4-6."),
       stylePrompt: z
         .string()
         .optional()
@@ -182,7 +181,7 @@ export function registerContributionTools(server: McpServer) {
           content: entry.content,
           contentFormat: entry.contentFormat ?? "plain",
           apiKey,
-          model,
+          model: await getClaudeModel(model),
           stylePrompt,
         });
 

@@ -211,6 +211,23 @@ export async function getCleanupStylePrompt(): Promise<string> {
   return setting?.value ?? "";
 }
 
+// Fallback when no model is set in app Settings. Keep in sync with
+// DEFAULT_CLAUDE_MODEL in src/services/settings.ts (separate runtimes).
+export const DEFAULT_CLAUDE_MODEL = "claude-sonnet-4-6";
+
+// Resolve the Claude model: an explicit argument wins, otherwise the user's
+// saved "claude_model" setting, otherwise the built-in default.
+export async function getClaudeModel(providedModel?: string): Promise<string> {
+  if (providedModel) return providedModel;
+
+  const [setting] = await db
+    .select()
+    .from(schema.settings)
+    .where(eq(schema.settings.key, "claude_model"));
+
+  return setting?.value || DEFAULT_CLAUDE_MODEL;
+}
+
 export async function cleanContentWithClaude({
   content,
   contentFormat,

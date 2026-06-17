@@ -32,6 +32,8 @@ export function SettingsForm() {
   const {
     apiKey,
     setApiKey,
+    claudeModel,
+    setClaudeModel,
     cleanupStylePrompt,
     setCleanupStylePrompt,
     microphoneDeviceId,
@@ -44,6 +46,7 @@ export function SettingsForm() {
     loading,
   } = useSettings();
   const [keyInput, setKeyInput] = useState("");
+  const [modelInput, setModelInput] = useState("");
   const [cleanupPromptInput, setCleanupPromptInput] = useState("");
   const [saved, setSaved] = useState(false);
   const [microphones, setMicrophones] = useState<MediaDeviceInfo[]>([]);
@@ -64,6 +67,10 @@ export function SettingsForm() {
       setKeyInput(apiKey);
     }
   }, [apiKey]);
+
+  useEffect(() => {
+    setModelInput(claudeModel);
+  }, [claudeModel]);
 
   useEffect(() => {
     setCleanupPromptInput(cleanupStylePrompt);
@@ -112,6 +119,7 @@ export function SettingsForm() {
   const handleSave = async () => {
     await Promise.all([
       setApiKey(keyInput),
+      setClaudeModel(modelInput),
       setCleanupStylePrompt(cleanupPromptInput),
     ]);
     setSaved(true);
@@ -299,6 +307,28 @@ export function SettingsForm() {
                 Required for meeting summarization and optional transcript cleanup.
                 Get your key from
                 console.anthropic.com
+              </p>
+            </div>
+            <div className="settings-field">
+              <label className="settings-label" htmlFor="claude-model">
+                Claude Model
+              </label>
+              <input
+                id="claude-model"
+                type="text"
+                className="settings-input"
+                value={modelInput}
+                onChange={(e) => setModelInput(e.target.value)}
+                placeholder="claude-sonnet-4-6"
+              />
+              <p className="settings-hint">
+                Model ID used for summaries and Claude cleanup. Enter a bare model
+                alias — e.g. <code>claude-sonnet-4-6</code> (balanced),{" "}
+                <code>claude-opus-4-8</code> (most capable), or{" "}
+                <code>claude-haiku-4-5</code> (fastest, cheapest). Use the alias
+                as-is; don't append a date. Leave blank to use the default
+                (claude-sonnet-4-6). Models retire over time, so update this if
+                requests start failing with a "model not found" error.
               </p>
             </div>
             <div className="settings-field">
