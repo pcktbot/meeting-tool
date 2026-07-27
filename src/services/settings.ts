@@ -1,8 +1,14 @@
 import { getDb, schema } from "../db";
 import { eq } from "drizzle-orm";
 
+// Default Claude model used for summaries and transcript/entry cleanup when the
+// user has not set one in Settings. Keep in sync with the MCP server's fallback
+// in mcp-server/src/tools/cleanup.ts (the two run in separate runtimes).
+export const DEFAULT_CLAUDE_MODEL = "claude-sonnet-4-6";
+
 export const SETTINGS = {
   ANTHROPIC_API_KEY: "anthropic_api_key",
+  CLAUDE_MODEL: "claude_model",
   CLAUDE_CLEANUP_STYLE_PROMPT: "claude_cleanup_style_prompt",
   WHISPER_MODEL: "whisper_model",
   DEFAULT_LANGUAGE: "default_language",
