@@ -112,27 +112,7 @@ CREATE TABLE IF NOT EXISTS contribution_todos (
   updated_at INTEGER NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS teams_chat_messages (
-  id TEXT PRIMARY KEY,
-  graph_message_id TEXT NOT NULL,
-  chat_id TEXT NOT NULL,
-  chat_type TEXT NOT NULL,
-  chat_topic TEXT,
-  chat_web_url TEXT,
-  message_web_url TEXT,
-  from_user_id TEXT,
-  from_display_name TEXT,
-  body_text TEXT NOT NULL,
-  body_html TEXT,
-  created_date_time TEXT NOT NULL,
-  imported_at INTEGER NOT NULL,
-  contribution_entry_id TEXT REFERENCES contribution_entries(id) ON DELETE SET NULL
-);
-
 CREATE INDEX IF NOT EXISTS idx_contribution_entries_date ON contribution_entries(entry_date);
 CREATE INDEX IF NOT EXISTS idx_contribution_highlights_entry_id ON contribution_highlights(contribution_entry_id);
 CREATE INDEX IF NOT EXISTS idx_contribution_summaries_range ON contribution_summaries(date_from, date_to);
 CREATE INDEX IF NOT EXISTS idx_contribution_todos_range ON contribution_todos(date_from, date_to);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_teams_chat_messages_graph_id ON teams_chat_messages(graph_message_id);
-CREATE INDEX IF NOT EXISTS idx_teams_chat_messages_created ON teams_chat_messages(created_date_time);
-CREATE INDEX IF NOT EXISTS idx_teams_chat_messages_contribution_entry ON teams_chat_messages(contribution_entry_id);

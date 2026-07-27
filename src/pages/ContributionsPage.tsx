@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useContributions } from "../hooks/useContributions";
 import { useDayData } from "../hooks/useDayData";
@@ -8,12 +8,6 @@ import { ContributionInput } from "../components/Contributions/ContributionInput
 import { ContributionTodoInput } from "../components/Contributions/ContributionTodoInput";
 import { ContributionTodoCard } from "../components/Contributions/ContributionTodoCard";
 import { DiaryCapturePanel } from "../components/Contributions/DiaryCapturePanel";
-import {
-  getTeamsChatMessagesForDate,
-  linkTeamsMessageToContribution,
-  scanTeamsChats,
-  type TeamsChatMessage,
-} from "../services/teams";
 import "./ContributionsPage.css";
 
 function formatDisplayDate(dateStr: string): string {
@@ -46,21 +40,8 @@ function todayDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function daysIncludingSelectedDate(dateStr: string): number {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const selected = new Date(year, month - 1, day);
-  const today = new Date();
-  selected.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  const diffMs = today.getTime() - selected.getTime();
-  return Math.max(1, Math.floor(diffMs / 86_400_000) + 1);
-}
-
 export function ContributionsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [teamsMessages, setTeamsMessages] = useState<TeamsChatMessage[]>([]);
-  const [teamsLoading, setTeamsLoading] = useState(false);
-  const [teamsStatus, setTeamsStatus] = useState<string | null>(null);
   const {
     selectedDate,
     setSelectedDate,
@@ -103,62 +84,12 @@ export function ContributionsPage() {
 
   const isToday = selectedDate === todayDate();
 
-  useEffect(() => {
-    let cancelled = false;
-    setTeamsLoading(true);
-    getTeamsChatMessagesForDate(selectedDate)
-      .then((messages) => {
-        if (!cancelled) setTeamsMessages(messages);
-      })
-      .catch((err) => {
-        console.error("Failed to load Teams messages:", err);
-        if (!cancelled) setTeamsStatus("Could not load imported Teams messages.");
-      })
-      .finally(() => {
-        if (!cancelled) setTeamsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedDate]);
-
   const updateDate = (date: string) => {
     setSelectedDate(date);
     const next = new URLSearchParams(searchParams);
     next.set("date", date);
     next.delete("entry");
     setSearchParams(next, { replace: true });
-  };
-
-  const handleScanTeams = async () => {
-    setTeamsLoading(true);
-    setTeamsStatus(null);
-
-    try {
-      const result = await scanTeamsChats(daysIncludingSelectedDate(selectedDate));
-      const messages = await getTeamsChatMessagesForDate(selectedDate);
-      setTeamsMessages(messages);
-      setTeamsStatus(
-        `Teams scan imported ${result.imported} new sent message${result.imported === 1 ? "" : "s"} from ${result.scannedChats - result.skippedChats} readable chat${result.scannedChats - result.skippedChats === 1 ? "" : "s"}${result.skippedChats > 0 ? ` and skipped ${result.skippedChats} inaccessible chat${result.skippedChats === 1 ? "" : "s"}` : ""}.`,
-      );
-    } catch (err) {
-      console.error("Failed to scan Teams chats:", err);
-      setTeamsStatus(
-        err instanceof Error ? err.message : "Teams scan failed.",
-      );
-    } finally {
-      setTeamsLoading(false);
-    }
-  };
-
-  const handleLinkTeamsMessage = async (messageId: string) => {
-    if (entries.length === 0) return;
-    const targetEntry = entries[0];
-    const updated = await linkTeamsMessageToContribution(messageId, targetEntry.id);
-    setTeamsMessages((current) =>
-      current.map((message) => (message.id === updated.id ? updated : message)),
-    );
   };
 
   return (
@@ -288,65 +219,6 @@ export function ContributionsPage() {
                   ))}
                 </div>
               )}
-
-              <div className="contributions-teams">
-                <div className="contributions-section-heading-row">
-                  <h3 className="contributions-section-title">Teams Sent Messages</h3>
-                  <button
-                    className="contributions-secondary-btn"
-                    onClick={handleScanTeams}
-                    disabled={teamsLoading}
-                    type="button"
-                  >
-                    {teamsLoading ? "Scanning..." : "Scan Chats"}
-                  </button>
-                </div>
-                {teamsStatus && (
-                  <p className="contributions-section-empty">{teamsStatus}</p>
-                )}
-                {teamsMessages.length === 0 ? (
-                  <p className="contributions-section-empty">
-                    No imported sent Teams chat messages for this date.
-                  </p>
-                ) : (
-                  <div className="teams-message-list">
-                    {teamsMessages.map((message) => (
-                      <article key={message.id} className="teams-message-card">
-                        <div className="teams-message-meta">
-                          <span>{new Date(message.createdDateTime).toLocaleTimeString([], {
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}</span>
-                          <span>{message.chatTopic || message.chatType}</span>
-                          {message.contributionEntryId && <span>Linked</span>}
-                        </div>
-                        <p className="teams-message-body">{message.bodyText}</p>
-                        <div className="teams-message-actions">
-                          {message.messageWebUrl && (
-                            <a
-                              className="teams-message-link"
-                              href={message.messageWebUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              Open in Teams
-                            </a>
-                          )}
-                          {entries.length > 0 && !message.contributionEntryId && (
-                            <button
-                              className="contributions-secondary-btn"
-                              onClick={() => void handleLinkTeamsMessage(message.id)}
-                              type="button"
-                            >
-                              Link to Entry
-                            </button>
-                          )}
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                )}
-              </div>
 
               <div className="contributions-todos">
                 <h3 className="contributions-section-title">Todos</h3>

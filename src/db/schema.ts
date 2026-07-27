@@ -170,27 +170,3 @@ export const contributionTodos = sqliteTable("contribution_todos", {
     .$defaultFn(() => new Date())
     .notNull(),
 });
-
-export const teamsChatMessages = sqliteTable("teams_chat_messages", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  graphMessageId: text("graph_message_id").notNull(),
-  chatId: text("chat_id").notNull(),
-  chatType: text("chat_type").notNull(),
-  chatTopic: text("chat_topic"),
-  chatWebUrl: text("chat_web_url"),
-  messageWebUrl: text("message_web_url"),
-  fromUserId: text("from_user_id"),
-  fromDisplayName: text("from_display_name"),
-  bodyText: text("body_text").notNull(),
-  bodyHtml: text("body_html"),
-  createdDateTime: text("created_date_time").notNull(),
-  importedAt: integer("imported_at", { mode: "timestamp" })
-    .$defaultFn(() => new Date())
-    .notNull(),
-  contributionEntryId: text("contribution_entry_id").references(
-    () => contributionEntries.id,
-    { onDelete: "set null" },
-  ),
-});

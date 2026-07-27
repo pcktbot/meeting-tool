@@ -8,12 +8,6 @@ import {
   openTextBackupDirectory,
   runTextBackupNow,
 } from "../../services/backups";
-import { invoke } from "@tauri-apps/api/core";
-import {
-  getTeamsChatLastScanAt,
-  getTeamsChatScanDays,
-  setTeamsChatScanDays,
-} from "../../services/teams";
 import "./SettingsModal.css";
 
 const THEME_FIELDS = [
@@ -54,11 +48,6 @@ export function SettingsForm() {
   const [lastBackupDate, setLastBackupDate] = useState<string | null>(null);
   const [backupStatus, setBackupStatus] = useState<string | null>(null);
   const [backupBusy, setBackupBusy] = useState(false);
-  const [teamsAccount, setTeamsAccount] = useState<string | null>(null);
-  const [teamsConnecting, setTeamsConnecting] = useState(false);
-  const [teamsScanDaysInput, setTeamsScanDaysInput] = useState("7");
-  const [teamsLastScanAt, setTeamsLastScanAt] = useState<string | null>(null);
-  const [teamsStatus, setTeamsStatus] = useState<string | null>(null);
   const [themeDrafts, setThemeDrafts] = useState<Partial<Record<keyof ThemeSettings, string>>>({});
   const colorInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -95,25 +84,6 @@ export function SettingsForm() {
         console.error("Failed to load backup settings:", err);
         setBackupStatus("Could not load backup folder.");
       });
-  }, []);
-
-  useEffect(() => {
-    Promise.all([getTeamsChatScanDays(), getTeamsChatLastScanAt()])
-      .then(([scanDays, lastScan]) => {
-        setTeamsScanDaysInput(scanDays);
-        setTeamsLastScanAt(lastScan);
-      })
-      .catch((err) => {
-        console.error("Failed to load Teams settings:", err);
-        setTeamsStatus("Could not load Teams settings.");
-      });
-
-    invoke<string>("ms_auth_status")
-      .then((raw) => {
-        const parsed = JSON.parse(raw) as { connected: boolean; account: string | null };
-        setTeamsAccount(parsed.connected ? parsed.account : null);
-      })
-      .catch((err) => console.error("Failed to read Teams connection status:", err));
   }, []);
 
   const handleSave = async () => {
@@ -198,34 +168,6 @@ export function SettingsForm() {
       setBackupStatus(
         err instanceof Error ? err.message : "Could not open backup folder.",
       );
-    }
-  };
-
-  const handleSaveTeams = async () => {
-    await setTeamsChatScanDays(teamsScanDaysInput);
-    setTeamsStatus("Teams settings saved.");
-    setTimeout(() => setTeamsStatus(null), 2500);
-  };
-
-  const handleConnectTeams = async () => {
-    setTeamsConnecting(true);
-    setTeamsStatus(null);
-    try {
-      const raw = await invoke<string>("ms_auth_login", { deviceCode: false });
-      const parsed = JSON.parse(raw) as
-        | { account: string | null }
-        | { error: string; message?: string };
-      if ("error" in parsed) {
-        setTeamsStatus(parsed.message ?? `Sign-in failed: ${parsed.error}`);
-      } else {
-        setTeamsAccount(parsed.account);
-        setTeamsStatus("Microsoft account connected.");
-      }
-    } catch (err) {
-      console.error("Teams connect failed:", err);
-      setTeamsStatus(err instanceof Error ? err.message : "Sign-in failed.");
-    } finally {
-      setTeamsConnecting(false);
     }
   };
 
@@ -392,65 +334,6 @@ export function SettingsForm() {
             {backupStatus && <p className="settings-hint">{backupStatus}</p>}
           </div>
 
-          <div className="settings-section">
-            <h3 className="settings-section-title">Teams Chat Import</h3>
-            <div className="settings-field">
-              <span className="settings-label">Microsoft Account</span>
-              <p className="settings-static-text">
-                {teamsAccount ? `Connected as ${teamsAccount}` : "Not connected."}
-              </p>
-              <button
-                className="settings-save-btn"
-                onClick={handleConnectTeams}
-                disabled={teamsConnecting}
-                type="button"
-              >
-                {teamsConnecting ? "Opening sign-in..." : teamsAccount ? "Reconnect" : "Connect Microsoft"}
-              </button>
-              <p className="settings-hint">
-                Opens a browser to sign in once. The token then refreshes silently;
-                imports are limited to chat messages you sent.
-              </p>
-            </div>
-
-            <div className="settings-field">
-              <label className="settings-label" htmlFor="teams-scan-days">
-                Default Scan Window
-              </label>
-              <select
-                id="teams-scan-days"
-                className="settings-select"
-                value={teamsScanDaysInput}
-                onChange={(e) => setTeamsScanDaysInput(e.target.value)}
-              >
-                <option value="1">Today only</option>
-                <option value="3">Last 3 days</option>
-                <option value="7">Last 7 days</option>
-                <option value="14">Last 14 days</option>
-              </select>
-            </div>
-
-            <div className="settings-field">
-              <span className="settings-label">Last Teams Scan</span>
-              <p className="settings-static-text">
-                {teamsLastScanAt
-                  ? new Date(teamsLastScanAt).toLocaleString()
-                  : "No Teams scan has run yet."}
-              </p>
-            </div>
-
-            <div className="settings-actions">
-              <button
-                className="settings-save-btn"
-                onClick={handleSaveTeams}
-                type="button"
-              >
-                Save Teams Settings
-              </button>
-            </div>
-
-            {teamsStatus && <p className="settings-hint">{teamsStatus}</p>}
-          </div>
         </div>
 
         <div className="settings-column settings-column--theme">
