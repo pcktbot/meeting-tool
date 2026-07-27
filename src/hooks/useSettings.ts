@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { getSetting, setSetting, SETTINGS } from "../services/settings";
+import {
+  getSetting,
+  setSetting,
+  SETTINGS,
+  DEFAULT_CLAUDE_MODEL,
+} from "../services/settings";
 import type { AudioSource } from "../services/audio/types";
 import {
   applyThemeSettings,
@@ -11,6 +16,7 @@ import {
 
 export function useSettings() {
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [claudeModel, setClaudeModelState] = useState<string>(DEFAULT_CLAUDE_MODEL);
   const [cleanupStylePrompt, setCleanupStylePrompt] = useState<string>("");
   const [audioSourceVal, setAudioSourceVal] = useState<AudioSource>("microphone");
   const [micDeviceId, setMicDeviceId] = useState<string | null>(null);
@@ -20,8 +26,9 @@ export function useSettings() {
 
   useEffect(() => {
     async function load() {
-      const [key, stylePrompt, source, deviceId, retentionDays, theme] = await Promise.all([
+      const [key, model, stylePrompt, source, deviceId, retentionDays, theme] = await Promise.all([
         getSetting(SETTINGS.ANTHROPIC_API_KEY),
+        getSetting(SETTINGS.CLAUDE_MODEL),
         getSetting(SETTINGS.CLAUDE_CLEANUP_STYLE_PROMPT),
         getSetting(SETTINGS.AUDIO_SOURCE),
         getSetting(SETTINGS.MICROPHONE_DEVICE_ID),
@@ -29,6 +36,7 @@ export function useSettings() {
         getThemeSettings(),
       ]);
       setApiKey(key);
+      setClaudeModelState(model || DEFAULT_CLAUDE_MODEL);
       setCleanupStylePrompt(stylePrompt || "");
       setAudioSourceVal((source as AudioSource) || "microphone");
       setMicDeviceId(deviceId);
@@ -43,6 +51,12 @@ export function useSettings() {
   const updateApiKey = useCallback(async (key: string) => {
     await setSetting(SETTINGS.ANTHROPIC_API_KEY, key);
     setApiKey(key);
+  }, []);
+
+  const updateClaudeModel = useCallback(async (model: string) => {
+    const next = model.trim() || DEFAULT_CLAUDE_MODEL;
+    await setSetting(SETTINGS.CLAUDE_MODEL, next);
+    setClaudeModelState(next);
   }, []);
 
   const updateCleanupStylePrompt = useCallback(async (prompt: string) => {
@@ -86,6 +100,8 @@ export function useSettings() {
   return {
     apiKey,
     setApiKey: updateApiKey,
+    claudeModel,
+    setClaudeModel: updateClaudeModel,
     cleanupStylePrompt,
     setCleanupStylePrompt: updateCleanupStylePrompt,
     audioSource: audioSourceVal,
